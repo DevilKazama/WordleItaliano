@@ -716,18 +716,6 @@
                                Margin="0,0,0,14"
                                Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
 
-                    <Border Padding="12"
-                            Margin="0,0,0,16"
-                            CornerRadius="8"
-                            BorderThickness="1"
-                            BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
-                            Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}">
-                        <TextBlock Text="{Binding UpdateReleaseNotes}"
-                                   MaxHeight="120"
-                                   TextWrapping="Wrap"
-                                   Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
-                    </Border>
-
                     <TextBlock Text="{Binding UpdateProgressText}"
                                Margin="0,0,0,10"
                                TextWrapping="Wrap"

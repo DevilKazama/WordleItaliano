@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.5.1",
+    "title": "Novita' della versione 1.5.1",
+    "items": [
+      "Popup aggiornamento piu' pulito: rimosso il riquadro note vuoto.",
+      "Il changelog dettagliato resta visibile dopo il riavvio dell'app."
+    ]
+  },
+  {
     "version": "1.5.0",
     "title": "Novita' della versione 1.5.0",
     "items": [

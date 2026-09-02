@@ -97,7 +97,6 @@ public sealed class MainViewModel : ObservableObject
     private string _updateStatusText = string.Empty;
     private string _updateDialogTitle = string.Empty;
     private string _updateDialogMessage = string.Empty;
-    private string _updateReleaseNotes = string.Empty;
     private string _updateProgressText = string.Empty;
     private int _updateProgressValue;
     private string _availableVersionText = string.Empty;
@@ -368,12 +367,6 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _updateDialogMessage;
         set => SetProperty(ref _updateDialogMessage, value);
-    }
-
-    public string UpdateReleaseNotes
-    {
-        get => _updateReleaseNotes;
-        set => SetProperty(ref _updateReleaseNotes, value);
     }
 
     public string UpdateProgressText
@@ -2501,9 +2494,6 @@ public sealed class MainViewModel : ObservableObject
         UpdateDialogTitle = "Aggiornamento disponibile";
         AvailableVersionText = $"Nuova versione {update.TargetFullRelease.Version}";
         UpdateDialogMessage = "Puoi aggiornare ora e l'app si riaprira' automaticamente. Storico, punti e impostazioni restano nella cartella dati locale.";
-        UpdateReleaseNotes = string.IsNullOrWhiteSpace(update.TargetFullRelease.NotesMarkdown)
-            ? "Note di versione non disponibili."
-            : update.TargetFullRelease.NotesMarkdown;
         UpdateProgressText = string.Empty;
         UpdateProgressValue = 0;
         IsUpdateBusy = false;
