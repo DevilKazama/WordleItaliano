@@ -6,6 +6,7 @@ using System.Text;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Input;
+using Velopack;
 using WordleItaliano.Models;
 using WordleItaliano.Services;
 
@@ -18,6 +19,9 @@ public sealed class MainViewModel : ObservableObject
     private readonly WordRepository _repository;
     private readonly DailyWordService _dailyWordService;
     private readonly StorageService _storage;
+    private readonly AppSettings _settings;
+    private readonly AppUpdateService _updateService;
+    private UpdateInfo? _pendingUpdate;
     private string _dailySolution = string.Empty;
     private string _bonusSolution = string.Empty;
     private string _infiniteSolution = string.Empty;
@@ -67,6 +71,11 @@ public sealed class MainViewModel : ObservableObject
     private bool _isWrappedVisible;
     private bool _isMonthlyRecapVisible;
     private bool _isResetConfirmVisible;
+    private bool _isSettingsVisible;
+    private bool _isUpdateDialogVisible;
+    private bool _isUpdateBusy;
+    private bool _isUpdateStatusVisible;
+    private bool _updatePromptShownThisSession;
     private string _wrappedMode = "Mese";
     private DateOnly _wrappedPeriod = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     private string _wrappedPeriodLabel = string.Empty;
@@ -75,14 +84,21 @@ public sealed class MainViewModel : ObservableObject
     private string _scoreLineText = string.Empty;
     private string _modeBadgeText = "Giornaliera";
     private string _modeBadgeDetail = "Sfida quotidiana";
+    private string _updateStatusText = string.Empty;
+    private string _updateDialogTitle = string.Empty;
+    private string _updateDialogMessage = string.Empty;
+    private string _updateReleaseNotes = string.Empty;
+    private string _updateProgressText = string.Empty;
+    private string _availableVersionText = string.Empty;
 
     public MainViewModel()
     {
-        var settings = LoadSettings();
-        ColleagueName = settings.ColleagueName;
+        _settings = LoadSettings();
+        ColleagueName = _settings.ColleagueName;
         _repository = new WordRepository();
-        _dailyWordService = new DailyWordService(_repository, settings);
+        _dailyWordService = new DailyWordService(_repository, _settings);
         _storage = new StorageService();
+        _updateService = new AppUpdateService(_settings.UpdateRepositoryUrl);
         _todayKey = _dailyWordService.TodayKey;
         SetSolutionsForDate(DateOnly.FromDateTime(DateTime.Today));
         _currentSolution = _dailySolution;
@@ -188,12 +204,21 @@ public sealed class MainViewModel : ObservableObject
         CopyHistoryResultCommand = new RelayCommand(parameter => CopyText(parameter?.ToString()));
         CloseOverlayCommand = new RelayCommand(_ => CloseOverlays());
         ShowHelpCommand = new RelayCommand(_ => IsHelpVisible = true);
+        ShowSettingsCommand = new RelayCommand(_ => ShowSettings());
+        CheckUpdatesCommand = new RelayCommand(_ => _ = CheckForUpdatesManuallyAsync());
+        InstallUpdateCommand = new RelayCommand(_ => _ = InstallPendingUpdateAsync());
+        DismissUpdateCommand = new RelayCommand(_ => DismissUpdateDialog());
 
         LoadOrStartGame();
         RefreshStatisticsView();
         RefreshHistoryView();
         RefreshWrappedView();
         CheckPendingMonthlyRecap();
+
+        if (_settings.EnableAutomaticUpdateChecks)
+        {
+            _ = CheckForUpdatesOnStartupAsync();
+        }
     }
 
     public event EventHandler<int>? ShakeRequested;
@@ -239,6 +264,10 @@ public sealed class MainViewModel : ObservableObject
     public ICommand CopyHistoryResultCommand { get; }
     public ICommand CloseOverlayCommand { get; }
     public ICommand ShowHelpCommand { get; }
+    public ICommand ShowSettingsCommand { get; }
+    public ICommand CheckUpdatesCommand { get; }
+    public ICommand InstallUpdateCommand { get; }
+    public ICommand DismissUpdateCommand { get; }
 
     public string Message
     {
@@ -256,6 +285,44 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _modeBadgeDetail;
         set => SetProperty(ref _modeBadgeDetail, value);
+    }
+
+    public string AppVersionText => $"Versione {_updateService.CurrentVersionText}";
+
+    public string UpdateStatusText
+    {
+        get => _updateStatusText;
+        set => SetProperty(ref _updateStatusText, value);
+    }
+
+    public string UpdateDialogTitle
+    {
+        get => _updateDialogTitle;
+        set => SetProperty(ref _updateDialogTitle, value);
+    }
+
+    public string UpdateDialogMessage
+    {
+        get => _updateDialogMessage;
+        set => SetProperty(ref _updateDialogMessage, value);
+    }
+
+    public string UpdateReleaseNotes
+    {
+        get => _updateReleaseNotes;
+        set => SetProperty(ref _updateReleaseNotes, value);
+    }
+
+    public string UpdateProgressText
+    {
+        get => _updateProgressText;
+        set => SetProperty(ref _updateProgressText, value);
+    }
+
+    public string AvailableVersionText
+    {
+        get => _availableVersionText;
+        set => SetProperty(ref _availableVersionText, value);
     }
 
     public int BoardColumns
@@ -328,6 +395,30 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _isHelpVisible;
         set => SetProperty(ref _isHelpVisible, value);
+    }
+
+    public bool IsSettingsVisible
+    {
+        get => _isSettingsVisible;
+        set => SetProperty(ref _isSettingsVisible, value);
+    }
+
+    public bool IsUpdateDialogVisible
+    {
+        get => _isUpdateDialogVisible;
+        set => SetProperty(ref _isUpdateDialogVisible, value);
+    }
+
+    public bool IsUpdateBusy
+    {
+        get => _isUpdateBusy;
+        set => SetProperty(ref _isUpdateBusy, value);
+    }
+
+    public bool IsUpdateStatusVisible
+    {
+        get => _isUpdateStatusVisible;
+        set => SetProperty(ref _isUpdateStatusVisible, value);
     }
 
     public bool IsCurrentResultCopyVisible
@@ -483,7 +574,9 @@ public sealed class MainViewModel : ObservableObject
             IsHelpVisible ||
             IsWrappedVisible ||
             IsMonthlyRecapVisible ||
-            IsResetConfirmVisible)
+            IsResetConfirmVisible ||
+            IsSettingsVisible ||
+            IsUpdateDialogVisible)
         {
             return;
         }
@@ -2036,6 +2129,113 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    private void ShowSettings()
+    {
+        CloseOverlays();
+        UpdateStatusText = string.Empty;
+        IsUpdateStatusVisible = false;
+        IsSettingsVisible = true;
+    }
+
+    private async Task CheckForUpdatesOnStartupAsync()
+    {
+        if (_updatePromptShownThisSession)
+        {
+            return;
+        }
+
+        var result = await _updateService.CheckForUpdatesAsync();
+        if (result.Status == AppUpdateCheckStatus.Available && result.Update is not null)
+        {
+            ShowUpdateDialog(result.Update);
+        }
+    }
+
+    private async Task CheckForUpdatesManuallyAsync()
+    {
+        if (IsUpdateBusy)
+        {
+            return;
+        }
+
+        IsUpdateBusy = true;
+        IsUpdateStatusVisible = true;
+        UpdateStatusText = "Controllo aggiornamenti in corso...";
+
+        var result = await _updateService.CheckForUpdatesAsync();
+        IsUpdateBusy = false;
+
+        switch (result.Status)
+        {
+            case AppUpdateCheckStatus.Available when result.Update is not null:
+                UpdateStatusText = "Aggiornamento disponibile.";
+                ShowUpdateDialog(result.Update);
+                break;
+            case AppUpdateCheckStatus.NoUpdates:
+                UpdateStatusText = "Hai gia' l'ultima versione.";
+                ShowToast("Nessun aggiornamento disponibile.");
+                break;
+            case AppUpdateCheckStatus.NotInstalled:
+                UpdateStatusText = "Gli aggiornamenti funzionano dopo l'installazione con Setup.";
+                ShowToast("Versione di sviluppo: updater non attivo.");
+                break;
+            default:
+                UpdateStatusText = $"Aggiornamento non riuscito: {result.ErrorMessage ?? "errore sconosciuto"}";
+                ShowToast("Controllo aggiornamenti non riuscito.");
+                break;
+        }
+    }
+
+    private void ShowUpdateDialog(UpdateInfo update)
+    {
+        _pendingUpdate = update;
+        _updatePromptShownThisSession = true;
+        CloseOverlays();
+        IsSplashVisible = false;
+        UpdateDialogTitle = "Aggiornamento disponibile";
+        AvailableVersionText = $"Nuova versione {update.TargetFullRelease.Version}";
+        UpdateDialogMessage = "Puoi aggiornare ora e l'app si riaprira' automaticamente. Storico, punti e impostazioni restano nella cartella dati locale.";
+        UpdateReleaseNotes = string.IsNullOrWhiteSpace(update.TargetFullRelease.NotesMarkdown)
+            ? "Note di versione non disponibili."
+            : update.TargetFullRelease.NotesMarkdown;
+        UpdateProgressText = string.Empty;
+        IsUpdateBusy = false;
+        IsUpdateDialogVisible = true;
+    }
+
+    private async Task InstallPendingUpdateAsync()
+    {
+        if (_pendingUpdate is null || IsUpdateBusy)
+        {
+            return;
+        }
+
+        IsUpdateBusy = true;
+        UpdateProgressText = "Download aggiornamento...";
+        PersistActiveGameTime();
+
+        var result = await _updateService.DownloadAndRestartAsync(
+            _pendingUpdate,
+            progress => Application.Current.Dispatcher.Invoke(() =>
+            {
+                UpdateProgressText = $"Download {progress}%";
+            }));
+
+        if (!result.WasStarted)
+        {
+            IsUpdateBusy = false;
+            UpdateProgressText = string.Empty;
+            UpdateDialogMessage = $"Aggiornamento non riuscito: {result.ErrorMessage ?? "errore sconosciuto"}";
+        }
+    }
+
+    private void DismissUpdateDialog()
+    {
+        IsUpdateDialogVisible = false;
+        IsUpdateBusy = false;
+        UpdateProgressText = string.Empty;
+    }
+
     private static bool TryCopyToClipboard(string text)
     {
         var deadline = DateTime.UtcNow.AddSeconds(3);
@@ -2267,6 +2467,8 @@ public sealed class MainViewModel : ObservableObject
         IsWrappedVisible = false;
         IsMonthlyRecapVisible = false;
         IsResetConfirmVisible = false;
+        IsSettingsVisible = false;
+        IsUpdateDialogVisible = false;
     }
 
     private static AppSettings LoadSettings()
@@ -2289,6 +2491,16 @@ public sealed class MainViewModel : ObservableObject
             DateOnly.TryParse(baseDate.GetString(), out var parsed))
         {
             settings.BaseDate = parsed;
+        }
+
+        if (root.TryGetProperty("updateRepositoryUrl", out var updateRepositoryUrl))
+        {
+            settings.UpdateRepositoryUrl = updateRepositoryUrl.GetString() ?? settings.UpdateRepositoryUrl;
+        }
+
+        if (root.TryGetProperty("enableAutomaticUpdateChecks", out var automaticUpdateChecks))
+        {
+            settings.EnableAutomaticUpdateChecks = automaticUpdateChecks.GetBoolean();
         }
 
         return settings;

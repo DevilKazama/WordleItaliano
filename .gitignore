@@ -15,6 +15,7 @@ WordleItaliano/obj-framework/
 WordleItaliano/obj-framework2/
 WordleItaliano/publish/
 WordleItaliano/publish-single/
+WordleItaliano/releases/
 tools/repair-sep01-migration.ps1
 *.user
 *.suo

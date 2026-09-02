@@ -103,7 +103,7 @@
                     <Button Style="{StaticResource TopButtonStyle}" Content="Wrapped" Command="{Binding ShowWrappedCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Tastiera" Command="{Binding ToggleKeyboardCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Infinita" Command="{Binding StartInfiniteCommand}" />
-                    <Button Style="{StaticResource TopButtonStyle}" Content="Tema" Command="{Binding ToggleThemeCommand}" />
+                    <Button Style="{StaticResource TopButtonStyle}" Content="Opzioni" Command="{Binding ShowSettingsCommand}" />
                 </StackPanel>
             </DockPanel>
         </Border>
@@ -547,6 +547,172 @@
                                    TextWrapping="Wrap"
                                    Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
                     </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid Grid.RowSpan="3"
+              Background="#99000000"
+              Visibility="{Binding IsSettingsVisible, Converter={StaticResource BoolVisibility}}">
+            <Border Width="520"
+                    MaxWidth="620"
+                    Padding="24"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                    BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <StackPanel>
+                    <Grid Margin="0,0,0,18">
+                        <TextBlock Text="Opzioni"
+                                   FontSize="24"
+                                   FontWeight="Black"
+                                   Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                        <Button HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Content="X"
+                                Width="34"
+                                Height="30"
+                                Command="{Binding CloseOverlayCommand}"
+                                Style="{StaticResource TopButtonStyle}" />
+                    </Grid>
+
+                    <Border Padding="14"
+                            Margin="0,0,0,14"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
+                            Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Tema"
+                                           FontSize="16"
+                                           FontWeight="Bold"
+                                           Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                <TextBlock Text="Cambia tema chiaro/scuro."
+                                           Margin="0,4,0,0"
+                                           TextWrapping="Wrap"
+                                           Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                            </StackPanel>
+                            <Button Grid.Column="1"
+                                    Content="Cambia"
+                                    Command="{Binding ToggleThemeCommand}"
+                                    Style="{StaticResource TopButtonStyle}" />
+                        </Grid>
+                    </Border>
+
+                    <Border Padding="14"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
+                            Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}">
+                        <StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <TextBlock Text="Aggiornamenti"
+                                               FontSize="16"
+                                               FontWeight="Bold"
+                                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                    <TextBlock Text="{Binding AppVersionText}"
+                                               Margin="0,4,0,0"
+                                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                </StackPanel>
+                                <Button Grid.Column="1"
+                                        Content="Controlla"
+                                        Command="{Binding CheckUpdatesCommand}"
+                                        Style="{StaticResource TopButtonStyle}" />
+                            </Grid>
+                            <TextBlock Text="{Binding UpdateStatusText}"
+                                       Margin="0,12,0,0"
+                                       TextWrapping="Wrap"
+                                       Visibility="{Binding IsUpdateStatusVisible, Converter={StaticResource BoolVisibility}}"
+                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid Grid.RowSpan="3"
+              Background="#99000000"
+              Visibility="{Binding IsUpdateDialogVisible, Converter={StaticResource BoolVisibility}}">
+            <Border Width="520"
+                    MaxWidth="620"
+                    Padding="24"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                    BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Text="{Binding UpdateDialogTitle}"
+                                   FontSize="24"
+                                   FontWeight="Black"
+                                   Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                        <Button HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Content="X"
+                                Width="34"
+                                Height="30"
+                                Command="{Binding DismissUpdateCommand}"
+                                Style="{StaticResource TopButtonStyle}" />
+                    </Grid>
+
+                    <TextBlock Text="{Binding AvailableVersionText}"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Margin="0,0,0,8"
+                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                    <TextBlock Text="{Binding UpdateDialogMessage}"
+                               TextWrapping="Wrap"
+                               Margin="0,0,0,14"
+                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+
+                    <Border Padding="12"
+                            Margin="0,0,0,16"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
+                            Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}">
+                        <TextBlock Text="{Binding UpdateReleaseNotes}"
+                                   MaxHeight="120"
+                                   TextWrapping="Wrap"
+                                   Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                    </Border>
+
+                    <TextBlock Text="{Binding UpdateProgressText}"
+                               Margin="0,0,0,10"
+                               TextWrapping="Wrap"
+                               Visibility="{Binding IsUpdateBusy, Converter={StaticResource BoolVisibility}}"
+                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                        <Button Content="Piu' tardi"
+                                Command="{Binding DismissUpdateCommand}"
+                                Style="{StaticResource TopButtonStyle}" />
+                        <Button Content="Aggiorna ora"
+                                Command="{Binding InstallUpdateCommand}"
+                                Margin="8,4,4,4"
+                                Padding="14,8"
+                                FontWeight="Bold"
+                                Foreground="White"
+                                Background="#538D4E"
+                                BorderBrush="#538D4E"
+                                BorderThickness="1"
+                                Cursor="Hand"
+                                Focusable="False" />
+                    </StackPanel>
                 </StackPanel>
             </Border>
         </Grid>

@@ -10,7 +10,8 @@ Applicazione desktop Windows WPF offline in C# .NET 8.
 - Parola del giorno deterministica: data base `2026-01-01`, indice calcolato dai giorni trascorsi.
 - Salvataggio locale automatico di partita e statistiche.
 - Tema chiaro/scuro, schermata iniziale, statistiche e guida.
-- Nessuna connessione internet necessaria durante l'uso.
+- Nessuna connessione internet necessaria durante il gioco.
+- Aggiornamenti tramite GitHub Releases quando l'app e' installata con Velopack.
 
 ## Parole
 
@@ -39,10 +40,27 @@ dotnet restore --configfile .\NuGet.Config
 dotnet build -c Release --no-restore
 ```
 
-## Pubblicazione self-contained Windows x64
+## Pubblicazione self-contained Windows x64 classica
 
 ```powershell
 .\publish-win-x64.ps1
 ```
 
 L'eseguibile e tutti i file necessari saranno in `WordleItaliano/publish/win-x64`.
+
+## Pubblicazione con installer e aggiornamenti
+
+Per creare il pacchetto Velopack:
+
+```powershell
+.\publish-velopack-win-x64.ps1
+```
+
+I file da caricare nella GitHub Release saranno in `WordleItaliano/releases`.
+La prima installazione va fatta con il `Setup.exe` generato. Dopo la prima
+installazione, l'app controlla automaticamente gli aggiornamenti all'avvio e
+permette anche il controllo manuale da `Opzioni`.
+
+I dati utente restano in `%LocalAppData%\WordleItaliano`, quindi aggiornare o
+reinstallare una nuova versione non tocca storico, punti, impostazioni o partite
+salvate.
