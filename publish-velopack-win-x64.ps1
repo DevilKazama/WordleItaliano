@@ -8,6 +8,7 @@ $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $project = Join-Path $root "WordleItaliano\WordleItaliano.csproj"
 $publishDir = Join-Path $root "WordleItaliano\publish\velopack-win-x64"
 $releaseDir = Join-Path $root "WordleItaliano\releases"
+$packId = "WordleItalianoApp"
 
 [xml]$projectXml = Get-Content $project
 $version = $projectXml.Project.PropertyGroup.Version
@@ -33,7 +34,7 @@ dotnet publish $project `
 if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 dotnet vpk pack `
-    --packId WordleItaliano `
+    --packId $packId `
     --packVersion $version `
     --packDir $publishDir `
     --mainExe WordleItaliano.exe `

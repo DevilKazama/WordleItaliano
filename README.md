@@ -57,10 +57,11 @@ Per creare il pacchetto Velopack:
 ```
 
 I file da caricare nella GitHub Release saranno in `WordleItaliano/releases`.
-La prima installazione va fatta con il `Setup.exe` generato. Dopo la prima
-installazione, l'app controlla automaticamente gli aggiornamenti all'avvio e
-permette anche il controllo manuale da `Opzioni`.
+La prima installazione va fatta con `WordleItalianoApp-win-Setup.exe`. Dopo la
+prima installazione, l'app controlla automaticamente gli aggiornamenti all'avvio
+e permette anche il controllo manuale da `Opzioni`.
 
 I dati utente restano in `%LocalAppData%\WordleItaliano`, quindi aggiornare o
 reinstallare una nuova versione non tocca storico, punti, impostazioni o partite
-salvate.
+salvate. Il pacchetto installato usa invece l'ID `WordleItalianoApp`, in modo da
+tenere separati programma e dati utente.
