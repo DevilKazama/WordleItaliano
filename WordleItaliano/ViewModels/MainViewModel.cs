@@ -21,6 +21,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly StorageService _storage;
     private readonly AppSettings _settings;
     private readonly AppUpdateService _updateService;
+    private readonly UserSettings _userSettings;
     private UpdateInfo? _pendingUpdate;
     private string _dailySolution = string.Empty;
     private string _bonusSolution = string.Empty;
@@ -75,6 +76,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isUpdateDialogVisible;
     private bool _isUpdateBusy;
     private bool _isUpdateStatusVisible;
+    private bool _isProfileDialogVisible;
     private bool _updatePromptShownThisSession;
     private string _wrappedMode = "Mese";
     private DateOnly _wrappedPeriod = new(DateTime.Today.Year, DateTime.Today.Month, 1);
@@ -90,15 +92,21 @@ public sealed class MainViewModel : ObservableObject
     private string _updateReleaseNotes = string.Empty;
     private string _updateProgressText = string.Empty;
     private string _availableVersionText = string.Empty;
+    private string _playerName = string.Empty;
+    private string _profileNameDraft = string.Empty;
+    private string _profileError = string.Empty;
 
     public MainViewModel()
     {
         _settings = LoadSettings();
-        ColleagueName = _settings.ColleagueName;
         _repository = new WordRepository();
         _dailyWordService = new DailyWordService(_repository, _settings);
         _storage = new StorageService();
+        _userSettings = _storage.LoadUserSettings();
         _updateService = new AppUpdateService(_settings.UpdateRepositoryUrl);
+        PlayerName = _userSettings.PlayerName.Trim();
+        ProfileNameDraft = PlayerName;
+        IsProfileDialogVisible = string.IsNullOrWhiteSpace(PlayerName);
         _todayKey = _dailyWordService.TodayKey;
         SetSolutionsForDate(DateOnly.FromDateTime(DateTime.Today));
         _currentSolution = _dailySolution;
@@ -208,6 +216,7 @@ public sealed class MainViewModel : ObservableObject
         CheckUpdatesCommand = new RelayCommand(_ => _ = CheckForUpdatesManuallyAsync());
         InstallUpdateCommand = new RelayCommand(_ => _ = InstallPendingUpdateAsync());
         DismissUpdateCommand = new RelayCommand(_ => DismissUpdateDialog());
+        SaveProfileCommand = new RelayCommand(_ => SaveProfileName());
 
         LoadOrStartGame();
         RefreshStatisticsView();
@@ -238,8 +247,9 @@ public sealed class MainViewModel : ObservableObject
     public ObservableCollection<WinDistributionRowViewModel> WrappedWinRows { get; }
     public ObservableCollection<HistoryEntryViewModel> HistoryRows { get; }
     public Statistics Statistics { get; }
-    public string ColleagueName { get; }
-    public string SplashSubtitle => $"La sfida quotidiana di {ColleagueName}";
+    public string SplashSubtitle => string.IsNullOrWhiteSpace(PlayerName)
+        ? "La sfida quotidiana"
+        : $"La sfida quotidiana di {PlayerName}";
     public ICommand KeyCommand { get; }
     public ICommand SelectTileCommand { get; }
     public ICommand ToggleThemeCommand { get; }
@@ -268,6 +278,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand CheckUpdatesCommand { get; }
     public ICommand InstallUpdateCommand { get; }
     public ICommand DismissUpdateCommand { get; }
+    public ICommand SaveProfileCommand { get; }
 
     public string Message
     {
@@ -285,6 +296,30 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _modeBadgeDetail;
         set => SetProperty(ref _modeBadgeDetail, value);
+    }
+
+    public string PlayerName
+    {
+        get => _playerName;
+        set
+        {
+            if (SetProperty(ref _playerName, value))
+            {
+                OnPropertyChanged(nameof(SplashSubtitle));
+            }
+        }
+    }
+
+    public string ProfileNameDraft
+    {
+        get => _profileNameDraft;
+        set => SetProperty(ref _profileNameDraft, value);
+    }
+
+    public string ProfileError
+    {
+        get => _profileError;
+        set => SetProperty(ref _profileError, value);
     }
 
     public string AppVersionText => $"Versione {_updateService.CurrentVersionText}";
@@ -419,6 +454,12 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _isUpdateStatusVisible;
         set => SetProperty(ref _isUpdateStatusVisible, value);
+    }
+
+    public bool IsProfileDialogVisible
+    {
+        get => _isProfileDialogVisible;
+        set => SetProperty(ref _isProfileDialogVisible, value);
     }
 
     public bool IsCurrentResultCopyVisible
@@ -576,7 +617,8 @@ public sealed class MainViewModel : ObservableObject
             IsMonthlyRecapVisible ||
             IsResetConfirmVisible ||
             IsSettingsVisible ||
-            IsUpdateDialogVisible)
+            IsUpdateDialogVisible ||
+            IsProfileDialogVisible)
         {
             return;
         }
@@ -606,6 +648,11 @@ public sealed class MainViewModel : ObservableObject
     private void HandleInput(string input)
     {
         if (EnsureCurrentGame())
+        {
+            return;
+        }
+
+        if (IsProfileDialogVisible)
         {
             return;
         }
@@ -2132,9 +2179,29 @@ public sealed class MainViewModel : ObservableObject
     private void ShowSettings()
     {
         CloseOverlays();
+        ProfileNameDraft = PlayerName;
+        ProfileError = string.Empty;
         UpdateStatusText = string.Empty;
         IsUpdateStatusVisible = false;
         IsSettingsVisible = true;
+    }
+
+    private void SaveProfileName()
+    {
+        var name = ProfileNameDraft.Trim();
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            ProfileError = "Inserisci un nome.";
+            return;
+        }
+
+        PlayerName = name;
+        ProfileNameDraft = name;
+        ProfileError = string.Empty;
+        IsProfileDialogVisible = false;
+        _userSettings.PlayerName = name;
+        _storage.SaveUserSettings(_userSettings);
+        ShowToast("Nome salvato.");
     }
 
     private async Task CheckForUpdatesOnStartupAsync()
@@ -2482,11 +2549,6 @@ public sealed class MainViewModel : ObservableObject
         using var document = JsonDocument.Parse(File.ReadAllText(path));
         var root = document.RootElement;
         var settings = new AppSettings();
-        if (root.TryGetProperty("colleagueName", out var colleague))
-        {
-            settings.ColleagueName = colleague.GetString() ?? settings.ColleagueName;
-        }
-
         if (root.TryGetProperty("baseDate", out var baseDate) &&
             DateOnly.TryParse(baseDate.GetString(), out var parsed))
         {

@@ -10,6 +10,7 @@ public sealed class StorageService
     private readonly string _folder;
     private readonly string _gamePath;
     private readonly string _statsPath;
+    private readonly string _userSettingsPath;
 
     public StorageService()
     {
@@ -17,6 +18,7 @@ public sealed class StorageService
             ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "WordleItaliano");
         _gamePath = Path.Combine(_folder, "game.json");
         _statsPath = Path.Combine(_folder, "statistics.json");
+        _userSettingsPath = Path.Combine(_folder, "userSettings.json");
     }
 
     public SavedGame? LoadGame()
@@ -29,6 +31,11 @@ public sealed class StorageService
         return Load<Statistics>(_statsPath) ?? new Statistics();
     }
 
+    public UserSettings LoadUserSettings()
+    {
+        return Load<UserSettings>(_userSettingsPath) ?? new UserSettings();
+    }
+
     public void SaveGame(SavedGame game)
     {
         Save(_gamePath, game);
@@ -37,6 +44,11 @@ public sealed class StorageService
     public void SaveStatistics(Statistics statistics)
     {
         Save(_statsPath, statistics);
+    }
+
+    public void SaveUserSettings(UserSettings settings)
+    {
+        Save(_userSettingsPath, settings);
     }
 
     private T? Load<T>(string path)
