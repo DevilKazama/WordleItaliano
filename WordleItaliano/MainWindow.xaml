@@ -765,6 +765,62 @@
 
         <Grid Grid.RowSpan="3"
               Background="#99000000"
+              Visibility="{Binding IsChangelogVisible, Converter={StaticResource BoolVisibility}}">
+            <Border Width="520"
+                    MaxWidth="620"
+                    Padding="24"
+                    VerticalAlignment="Center"
+                    HorizontalAlignment="Center"
+                    Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                    BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
+                    BorderThickness="1"
+                    CornerRadius="8">
+                <StackPanel>
+                    <Grid Margin="0,0,0,16">
+                        <TextBlock Text="{Binding ChangelogTitle}"
+                                   FontSize="24"
+                                   FontWeight="Black"
+                                   Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                        <Button HorizontalAlignment="Right"
+                                VerticalAlignment="Top"
+                                Content="X"
+                                Width="34"
+                                Height="30"
+                                Command="{Binding DismissChangelogCommand}"
+                                Style="{StaticResource TopButtonStyle}" />
+                    </Grid>
+
+                    <Border Padding="14"
+                            Margin="0,0,0,18"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
+                            Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}">
+                        <TextBlock Text="{Binding ChangelogText}"
+                                   FontSize="14"
+                                   LineHeight="24"
+                                   TextWrapping="Wrap"
+                                   Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                    </Border>
+
+                    <Button Content="Ok"
+                            Command="{Binding DismissChangelogCommand}"
+                            Height="42"
+                            HorizontalAlignment="Right"
+                            MinWidth="96"
+                            FontWeight="Bold"
+                            Background="#538D4E"
+                            Foreground="White"
+                            BorderBrush="#538D4E"
+                            BorderThickness="1"
+                            Cursor="Hand"
+                            Focusable="False" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Grid Grid.RowSpan="3"
+              Background="#99000000"
               Visibility="{Binding IsHistoryVisible, Converter={StaticResource BoolVisibility}}">
             <Border Width="500"
                     MaxWidth="560"

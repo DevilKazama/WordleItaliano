@@ -21,6 +21,8 @@ public sealed class StorageService
         _userSettingsPath = Path.Combine(_folder, "userSettings.json");
     }
 
+    public bool UserSettingsExists => File.Exists(_userSettingsPath);
+
     public SavedGame? LoadGame()
     {
         return Load<SavedGame>(_gamePath);

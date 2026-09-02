@@ -1,0 +1,12 @@
+[
+  {
+    "version": "1.5.0",
+    "title": "Novita' della versione 1.5.0",
+    "items": [
+      "Timer anche per Bonus random e modalita' Infinita.",
+      "Il timer parte alla prima lettera digitata e resta separato per ogni modalita'.",
+      "Barra di avanzamento durante il download degli aggiornamenti.",
+      "Changelog mostrato una sola volta dopo l'aggiornamento."
+    ]
+  }
+]

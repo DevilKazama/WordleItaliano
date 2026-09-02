@@ -22,6 +22,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly AppSettings _settings;
     private readonly AppUpdateService _updateService;
     private readonly UserSettings _userSettings;
+    private readonly ChangelogService _changelogService;
     private UpdateInfo? _pendingUpdate;
     private string _dailySolution = string.Empty;
     private string _bonusSolution = string.Empty;
@@ -83,6 +84,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isUpdateBusy;
     private bool _isUpdateStatusVisible;
     private bool _isProfileDialogVisible;
+    private bool _isChangelogVisible;
     private bool _updatePromptShownThisSession;
     private string _wrappedMode = "Mese";
     private DateOnly _wrappedPeriod = new(DateTime.Today.Year, DateTime.Today.Month, 1);
@@ -102,6 +104,8 @@ public sealed class MainViewModel : ObservableObject
     private string _playerName = string.Empty;
     private string _profileNameDraft = string.Empty;
     private string _profileError = string.Empty;
+    private string _changelogTitle = string.Empty;
+    private string _changelogText = string.Empty;
 
     public MainViewModel()
     {
@@ -109,8 +113,10 @@ public sealed class MainViewModel : ObservableObject
         _repository = new WordRepository();
         _dailyWordService = new DailyWordService(_repository, _settings);
         _storage = new StorageService();
+        var userSettingsExists = _storage.UserSettingsExists;
         _userSettings = _storage.LoadUserSettings();
         _updateService = new AppUpdateService(_settings.UpdateRepositoryUrl);
+        _changelogService = new ChangelogService();
         PlayerName = _userSettings.PlayerName.Trim();
         ProfileNameDraft = PlayerName;
         IsProfileDialogVisible = string.IsNullOrWhiteSpace(PlayerName);
@@ -224,12 +230,14 @@ public sealed class MainViewModel : ObservableObject
         InstallUpdateCommand = new RelayCommand(_ => _ = InstallPendingUpdateAsync());
         DismissUpdateCommand = new RelayCommand(_ => DismissUpdateDialog());
         SaveProfileCommand = new RelayCommand(_ => SaveProfileName());
+        DismissChangelogCommand = new RelayCommand(_ => DismissChangelog());
 
         LoadOrStartGame();
         RefreshStatisticsView();
         RefreshHistoryView();
         RefreshWrappedView();
         CheckPendingMonthlyRecap();
+        ShowChangelogIfNeeded(userSettingsExists);
 
         if (_settings.EnableAutomaticUpdateChecks)
         {
@@ -286,6 +294,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand InstallUpdateCommand { get; }
     public ICommand DismissUpdateCommand { get; }
     public ICommand SaveProfileCommand { get; }
+    public ICommand DismissChangelogCommand { get; }
 
     public string Message
     {
@@ -327,6 +336,18 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _profileError;
         set => SetProperty(ref _profileError, value);
+    }
+
+    public string ChangelogTitle
+    {
+        get => _changelogTitle;
+        set => SetProperty(ref _changelogTitle, value);
+    }
+
+    public string ChangelogText
+    {
+        get => _changelogText;
+        set => SetProperty(ref _changelogText, value);
     }
 
     public string AppVersionText => $"Versione {_updateService.CurrentVersionText}";
@@ -473,6 +494,12 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _isProfileDialogVisible;
         set => SetProperty(ref _isProfileDialogVisible, value);
+    }
+
+    public bool IsChangelogVisible
+    {
+        get => _isChangelogVisible;
+        set => SetProperty(ref _isChangelogVisible, value);
     }
 
     public bool IsCurrentResultCopyVisible
@@ -631,7 +658,8 @@ public sealed class MainViewModel : ObservableObject
             IsResetConfirmVisible ||
             IsSettingsVisible ||
             IsUpdateDialogVisible ||
-            IsProfileDialogVisible)
+            IsProfileDialogVisible ||
+            IsChangelogVisible)
         {
             return;
         }
@@ -2367,8 +2395,51 @@ public sealed class MainViewModel : ObservableObject
         ProfileError = string.Empty;
         IsProfileDialogVisible = false;
         _userSettings.PlayerName = name;
+        if (string.IsNullOrWhiteSpace(_userSettings.LastSeenChangelogVersion))
+        {
+            _userSettings.LastSeenChangelogVersion = _updateService.CurrentVersionText;
+        }
+
         _storage.SaveUserSettings(_userSettings);
         ShowToast("Nome salvato.");
+    }
+
+    private void ShowChangelogIfNeeded(bool userSettingsExists)
+    {
+        var currentVersion = _updateService.CurrentVersionText;
+        if (!userSettingsExists || string.IsNullOrWhiteSpace(currentVersion) ||
+            _userSettings.LastSeenChangelogVersion == currentVersion)
+        {
+            return;
+        }
+
+        var entry = _changelogService.GetEntry(currentVersion);
+        if (entry is null)
+        {
+            _userSettings.LastSeenChangelogVersion = currentVersion;
+            _storage.SaveUserSettings(_userSettings);
+            return;
+        }
+
+        CloseOverlays();
+        IsSplashVisible = false;
+        IsProfileDialogVisible = false;
+        ChangelogTitle = string.IsNullOrWhiteSpace(entry.Title)
+            ? $"Novita' della versione {entry.Version}"
+            : entry.Title;
+        ChangelogText = string.Join(Environment.NewLine, entry.Items.Select(item => $"- {item}"));
+        IsChangelogVisible = true;
+    }
+
+    private void DismissChangelog()
+    {
+        IsChangelogVisible = false;
+        _userSettings.LastSeenChangelogVersion = _updateService.CurrentVersionText;
+        _storage.SaveUserSettings(_userSettings);
+        if (string.IsNullOrWhiteSpace(PlayerName))
+        {
+            IsProfileDialogVisible = true;
+        }
     }
 
     private async Task CheckForUpdatesOnStartupAsync()
@@ -2713,6 +2784,7 @@ public sealed class MainViewModel : ObservableObject
         IsResetConfirmVisible = false;
         IsSettingsVisible = false;
         IsUpdateDialogVisible = false;
+        IsChangelogVisible = false;
     }
 
     private static AppSettings LoadSettings()
