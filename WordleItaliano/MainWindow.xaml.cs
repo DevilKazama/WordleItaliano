@@ -36,12 +36,39 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainViewModel viewModel)
         {
+            if (IsTextInputTarget(e.OriginalSource))
+            {
+                if (e.Key == Key.Enter && viewModel.SaveProfileCommand.CanExecute(null))
+                {
+                    viewModel.SaveProfileCommand.Execute(null);
+                    e.Handled = true;
+                }
+
+                return;
+            }
+
             viewModel.HandlePhysicalKey(e.Key);
             if (e.Key is Key.Enter or Key.Back or Key.Left or Key.Right or >= Key.A and <= Key.Z)
             {
                 e.Handled = true;
             }
         }
+    }
+
+    private static bool IsTextInputTarget(object source)
+    {
+        var current = source as DependencyObject;
+        while (current is not null)
+        {
+            if (current is TextBox)
+            {
+                return true;
+            }
+
+            current = System.Windows.Media.VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
     }
 
     private void Tile_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
