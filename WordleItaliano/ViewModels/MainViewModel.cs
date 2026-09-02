@@ -60,6 +60,12 @@ public sealed class MainViewModel : ObservableObject
     private int _dailyElapsedSeconds;
     private bool _dailyTimerStarted;
     private DateTime? _dailyTimerStartedAt;
+    private int _bonusElapsedSeconds;
+    private bool _bonusTimerStarted;
+    private DateTime? _bonusTimerStartedAt;
+    private int _infiniteElapsedSeconds;
+    private bool _infiniteTimerStarted;
+    private DateTime? _infiniteTimerStartedAt;
     private string _dailyTimerText = "00:00";
     private bool _isDailyTimerVisible = true;
     private string _toastMessage = string.Empty;
@@ -91,6 +97,7 @@ public sealed class MainViewModel : ObservableObject
     private string _updateDialogMessage = string.Empty;
     private string _updateReleaseNotes = string.Empty;
     private string _updateProgressText = string.Empty;
+    private int _updateProgressValue;
     private string _availableVersionText = string.Empty;
     private string _playerName = string.Empty;
     private string _profileNameDraft = string.Empty;
@@ -354,6 +361,12 @@ public sealed class MainViewModel : ObservableObject
         set => SetProperty(ref _updateProgressText, value);
     }
 
+    public int UpdateProgressValue
+    {
+        get => _updateProgressValue;
+        set => SetProperty(ref _updateProgressValue, value);
+    }
+
     public string AvailableVersionText
     {
         get => _availableVersionText;
@@ -579,7 +592,7 @@ public sealed class MainViewModel : ObservableObject
         }
 
         PersistActiveGameTime();
-        StopDailyTimer();
+        StopCurrentTimer();
         StartNewGameForDate(today, "E' disponibile una nuova sfida giornaliera.");
         ShowToast("Nuova sfida giornaliera disponibile.");
         CheckPendingMonthlyRecap();
@@ -588,17 +601,17 @@ public sealed class MainViewModel : ObservableObject
 
     public void TickTimer()
     {
-        if (_dailyTimerStartedAt is null || _dailyStatus != GameStatus.Playing)
+        if (CurrentStatus != GameStatus.Playing || GetCurrentTimerStartedAt() is null)
         {
             return;
         }
 
-        RefreshDailyTimerText();
+        RefreshCurrentTimerText();
     }
 
     public void PersistActiveGameTime()
     {
-        SaveDailyTimerCheckpoint();
+        SaveCurrentTimerCheckpoint();
         SaveGame();
     }
 
@@ -721,7 +734,7 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
-        StartDailyTimerIfNeeded();
+        StartCurrentTimerIfNeeded();
         var index = CurrentTileIndex(_selectedColumn);
         Tiles[index].Letter = letter;
         Tiles[index].State = TileState.Filled;
@@ -769,7 +782,7 @@ public sealed class MainViewModel : ObservableObject
 
         if (guess == _currentSolution)
         {
-            StopDailyTimer();
+            StopCurrentTimer();
             SetCurrentStatus(GameStatus.Won);
             Message = _isInfiniteActive
                 ? "Infinita vinta. Puoi farne un'altra."
@@ -810,7 +823,7 @@ public sealed class MainViewModel : ObservableObject
 
         if (_currentRow == 6)
         {
-            StopDailyTimer();
+            StopCurrentTimer();
             SetCurrentStatus(GameStatus.Lost);
             Message = _isInfiniteActive
                 ? $"Infinita persa. La parola era {_currentSolution.ToUpperInvariant()}."
@@ -899,55 +912,177 @@ public sealed class MainViewModel : ObservableObject
         ? _infiniteGuesses
         : _isBonusActive ? _bonusGuesses : _dailyGuesses;
 
-    private void StartDailyTimerIfNeeded()
+    private void StartCurrentTimerIfNeeded()
     {
-        if (_isBonusActive || _isInfiniteActive || _dailyStatus != GameStatus.Playing)
+        if (CurrentStatus != GameStatus.Playing)
         {
             return;
         }
 
-        if (!_dailyTimerStarted)
+        var now = DateTime.Now;
+        if (_isInfiniteActive)
         {
-            _dailyTimerStarted = true;
-            _dailyElapsedSeconds = 0;
+            if (!_infiniteTimerStarted)
+            {
+                _infiniteTimerStarted = true;
+                _infiniteElapsedSeconds = 0;
+            }
+
+            _infiniteTimerStartedAt ??= now;
+        }
+        else if (_isBonusActive)
+        {
+            if (!_bonusTimerStarted)
+            {
+                _bonusTimerStarted = true;
+                _bonusElapsedSeconds = 0;
+            }
+
+            _bonusTimerStartedAt ??= now;
+        }
+        else
+        {
+            if (!_dailyTimerStarted)
+            {
+                _dailyTimerStarted = true;
+                _dailyElapsedSeconds = 0;
+            }
+
+            _dailyTimerStartedAt ??= now;
         }
 
-        _dailyTimerStartedAt ??= DateTime.Now;
-        RefreshDailyTimerText();
+        RefreshCurrentTimerText();
     }
 
-    private void StopDailyTimer()
+    private void StopCurrentTimer()
     {
-        SaveDailyTimerCheckpoint();
-        _dailyTimerStartedAt = null;
-        RefreshDailyTimerText();
+        SaveCurrentTimerCheckpoint();
+        if (_isInfiniteActive)
+        {
+            _infiniteTimerStartedAt = null;
+        }
+        else if (_isBonusActive)
+        {
+            _bonusTimerStartedAt = null;
+        }
+        else
+        {
+            _dailyTimerStartedAt = null;
+        }
+
+        RefreshCurrentTimerText();
     }
 
-    private void SaveDailyTimerCheckpoint()
+    private void PauseCurrentTimer()
     {
-        if (_dailyTimerStartedAt is null)
+        SaveCurrentTimerCheckpoint();
+        if (_isInfiniteActive)
+        {
+            _infiniteTimerStartedAt = null;
+        }
+        else if (_isBonusActive)
+        {
+            _bonusTimerStartedAt = null;
+        }
+        else
+        {
+            _dailyTimerStartedAt = null;
+        }
+    }
+
+    private void ResumeCurrentTimerIfNeeded()
+    {
+        if (CurrentStatus != GameStatus.Playing)
+        {
+            RefreshCurrentTimerText();
+            return;
+        }
+
+        var now = DateTime.Now;
+        if (_isInfiniteActive && _infiniteTimerStarted)
+        {
+            _infiniteTimerStartedAt ??= now;
+        }
+        else if (_isBonusActive && _bonusTimerStarted)
+        {
+            _bonusTimerStartedAt ??= now;
+        }
+        else if (!_isBonusActive && !_isInfiniteActive && _dailyTimerStarted)
+        {
+            _dailyTimerStartedAt ??= now;
+        }
+
+        RefreshCurrentTimerText();
+    }
+
+    private void SaveCurrentTimerCheckpoint()
+    {
+        var startedAt = GetCurrentTimerStartedAt();
+        if (startedAt is null)
         {
             return;
         }
 
-        var elapsed = DateTime.Now - _dailyTimerStartedAt.Value;
-        _dailyElapsedSeconds += Math.Max(0, (int)elapsed.TotalSeconds);
-        _dailyTimerStartedAt = DateTime.Now;
-    }
-
-    private int GetCurrentDailyElapsedSeconds()
-    {
-        if (_dailyTimerStartedAt is null)
+        var elapsed = Math.Max(0, (int)(DateTime.Now - startedAt.Value).TotalSeconds);
+        if (_isInfiniteActive)
         {
-            return _dailyElapsedSeconds;
+            _infiniteElapsedSeconds += elapsed;
+            _infiniteTimerStartedAt = DateTime.Now;
         }
-
-        return _dailyElapsedSeconds + Math.Max(0, (int)(DateTime.Now - _dailyTimerStartedAt.Value).TotalSeconds);
+        else if (_isBonusActive)
+        {
+            _bonusElapsedSeconds += elapsed;
+            _bonusTimerStartedAt = DateTime.Now;
+        }
+        else
+        {
+            _dailyElapsedSeconds += elapsed;
+            _dailyTimerStartedAt = DateTime.Now;
+        }
     }
 
-    private void RefreshDailyTimerText()
+    private DateTime? GetCurrentTimerStartedAt()
     {
-        DailyTimerText = FormatDuration(GetCurrentDailyElapsedSeconds());
+        return _isInfiniteActive
+            ? _infiniteTimerStartedAt
+            : _isBonusActive ? _bonusTimerStartedAt : _dailyTimerStartedAt;
+    }
+
+    private int GetCurrentElapsedSeconds()
+    {
+        var elapsedSeconds = _isInfiniteActive
+            ? _infiniteElapsedSeconds
+            : _isBonusActive ? _bonusElapsedSeconds : _dailyElapsedSeconds;
+        var startedAt = GetCurrentTimerStartedAt();
+        return startedAt is null
+            ? elapsedSeconds
+            : elapsedSeconds + Math.Max(0, (int)(DateTime.Now - startedAt.Value).TotalSeconds);
+    }
+
+    private int GetDailyElapsedSeconds()
+    {
+        return _dailyTimerStartedAt is null
+            ? _dailyElapsedSeconds
+            : _dailyElapsedSeconds + Math.Max(0, (int)(DateTime.Now - _dailyTimerStartedAt.Value).TotalSeconds);
+    }
+
+    private int GetBonusElapsedSeconds()
+    {
+        return _bonusTimerStartedAt is null
+            ? _bonusElapsedSeconds
+            : _bonusElapsedSeconds + Math.Max(0, (int)(DateTime.Now - _bonusTimerStartedAt.Value).TotalSeconds);
+    }
+
+    private int GetInfiniteElapsedSeconds()
+    {
+        return _infiniteTimerStartedAt is null
+            ? _infiniteElapsedSeconds
+            : _infiniteElapsedSeconds + Math.Max(0, (int)(DateTime.Now - _infiniteTimerStartedAt.Value).TotalSeconds);
+    }
+
+    private void RefreshCurrentTimerText()
+    {
+        DailyTimerText = FormatDuration(GetCurrentElapsedSeconds());
     }
 
     private static string FormatDuration(int seconds)
@@ -1024,6 +1159,9 @@ public sealed class MainViewModel : ObservableObject
         _dailyElapsedSeconds = 0;
         _dailyTimerStarted = false;
         _dailyTimerStartedAt = null;
+        _bonusElapsedSeconds = 0;
+        _bonusTimerStarted = false;
+        _bonusTimerStartedAt = null;
         _isBonusActive = false;
         _isBonusUnlocked = false;
         _dailyStatisticsAlreadyRecorded = false;
@@ -1076,17 +1214,20 @@ public sealed class MainViewModel : ObservableObject
         _dailyTimerStartedAt = _dailyTimerStarted && _dailyStatus == GameStatus.Playing
             ? DateTime.Now
             : null;
-        RefreshDailyTimerText();
         _dailyGuesses.Clear();
         _dailyGuesses.AddRange(saved.Guesses.Take(6));
         _isBonusUnlocked = saved.Bonus.IsUnlocked || _dailyStatus == GameStatus.Won;
         _bonusStatus = saved.Bonus.Status;
+        _bonusElapsedSeconds = Math.Max(0, saved.Bonus.ElapsedSeconds);
+        _bonusTimerStarted = saved.Bonus.TimerStarted;
         _bonusGuesses.Clear();
         _bonusGuesses.AddRange(saved.Bonus.Guesses.Take(6));
         if (saved.Bonus.WordLength != _bonusWordLength)
         {
             _bonusStatus = GameStatus.Playing;
             _bonusGuesses.Clear();
+            _bonusElapsedSeconds = 0;
+            _bonusTimerStarted = false;
         }
 
         if (_bonusGuesses.Count > 0 && _bonusStatus == GameStatus.Playing)
@@ -1132,12 +1273,15 @@ public sealed class MainViewModel : ObservableObject
         }
 
         _infiniteStatus = infinite.Status;
+        _infiniteElapsedSeconds = Math.Max(0, infinite.ElapsedSeconds);
+        _infiniteTimerStarted = infinite.TimerStarted;
         _infiniteGuesses.Clear();
         _infiniteGuesses.AddRange(infinite.Guesses.Take(6));
     }
 
     private void SetupDailyBoard()
     {
+        PauseCurrentTimer();
         _isInfiniteActive = false;
         _isBonusActive = false;
         IsDailyTimerVisible = true;
@@ -1145,6 +1289,7 @@ public sealed class MainViewModel : ObservableObject
         SetModeBadge("Giornaliera", "Sfida quotidiana");
         SetupBoard(5);
         LoadGuesses(_dailyGuesses);
+        ResumeCurrentTimerIfNeeded();
         Message = _dailyStatus == GameStatus.Playing ? "Indovina la parola di oggi." : Message;
         RefreshCopyButtonVisibility();
     }
@@ -1163,14 +1308,16 @@ public sealed class MainViewModel : ObservableObject
 
         IsSplashVisible = false;
         IsBonusPromptVisible = false;
+        PauseCurrentTimer();
         _isInfiniteActive = false;
         _isBonusActive = true;
-        IsDailyTimerVisible = false;
+        IsDailyTimerVisible = true;
         _isBonusUnlocked = true;
         _currentSolution = _bonusSolution;
         SetModeBadge("Bonus random", $"{_bonusWordLength} lettere");
         SetupBoard(_bonusWordLength);
         LoadGuesses(_bonusGuesses);
+        ResumeCurrentTimerIfNeeded();
         Message = $"Bonus random: parola da {_bonusWordLength} lettere.";
         RefreshCopyButtonVisibility();
         if (save)
@@ -1189,20 +1336,25 @@ public sealed class MainViewModel : ObservableObject
         IsSplashVisible = false;
         IsBonusPromptVisible = false;
         CloseOverlays();
+        PauseCurrentTimer();
         _isInfiniteActive = true;
         _isBonusActive = false;
-        IsDailyTimerVisible = false;
+        IsDailyTimerVisible = true;
         if (string.IsNullOrWhiteSpace(_infiniteSolution) || _infiniteStatus != GameStatus.Playing)
         {
             _infiniteSolution = PickRandomInfiniteWord();
             _infiniteGuesses.Clear();
             _infiniteStatus = GameStatus.Playing;
+            _infiniteElapsedSeconds = 0;
+            _infiniteTimerStarted = false;
+            _infiniteTimerStartedAt = null;
         }
 
         _currentSolution = _infiniteSolution;
         SetModeBadge("Infinita", "Statistiche separate");
         SetupBoard(5);
         LoadGuesses(_infiniteGuesses);
+        ResumeCurrentTimerIfNeeded();
         Message = "Modalita' infinita: parola casuale da 5 lettere.";
         RefreshCopyButtonVisibility();
         SaveGame();
@@ -1244,13 +1396,15 @@ public sealed class MainViewModel : ObservableObject
 
         IsSplashVisible = false;
         IsBonusPromptVisible = false;
+        PauseCurrentTimer();
         _isInfiniteActive = false;
         _isBonusActive = true;
-        IsDailyTimerVisible = false;
+        IsDailyTimerVisible = true;
         _currentSolution = _bonusSolution;
         SetModeBadge("Bonus random", $"{_bonusWordLength} lettere");
         SetupBoard(_bonusWordLength);
         LoadGuesses(_bonusGuesses);
+        ResumeCurrentTimerIfNeeded();
         Message = _bonusStatus switch
         {
             GameStatus.Won => "Bonus random gia' completato.",
@@ -1362,6 +1516,7 @@ public sealed class MainViewModel : ObservableObject
 
     private void SaveGame()
     {
+        SaveCurrentTimerCheckpoint();
         _storage.SaveGame(new SavedGame
         {
             GameDate = _todayKey,
@@ -1370,7 +1525,7 @@ public sealed class MainViewModel : ObservableObject
             WordLength = 5,
             Guesses = [.. _dailyGuesses],
             Status = _dailyStatus,
-            DailyElapsedSeconds = GetCurrentDailyElapsedSeconds(),
+            DailyElapsedSeconds = GetDailyElapsedSeconds(),
             DailyTimerStarted = _dailyTimerStarted,
             Bonus = new BonusGame
             {
@@ -1378,13 +1533,17 @@ public sealed class MainViewModel : ObservableObject
                 Solution = _bonusSolution,
                 WordLength = _bonusWordLength,
                 Guesses = [.. _bonusGuesses],
-                Status = _bonusStatus
+                Status = _bonusStatus,
+                ElapsedSeconds = GetBonusElapsedSeconds(),
+                TimerStarted = _bonusTimerStarted
             },
             Infinite = new InfiniteGame
             {
                 Solution = _infiniteSolution,
                 Guesses = [.. _infiniteGuesses],
-                Status = _infiniteStatus
+                Status = _infiniteStatus,
+                ElapsedSeconds = GetInfiniteElapsedSeconds(),
+                TimerStarted = _infiniteTimerStarted
             }
         });
     }
@@ -1479,7 +1638,7 @@ public sealed class MainViewModel : ObservableObject
             Attempts = won ? attempts : 6,
             Points = CalculateScore(5, won ? attempts : 0),
             ScoreEarned = CalculateScore(5, won ? attempts : 0),
-            DurationSeconds = _dailyTimerStarted ? _dailyElapsedSeconds : null,
+            DurationSeconds = _dailyTimerStarted ? GetDailyElapsedSeconds() : null,
             Guesses = [.. _dailyGuesses]
         };
     }
@@ -1497,6 +1656,7 @@ public sealed class MainViewModel : ObservableObject
             Attempts = won ? attempts : 6,
             Points = CalculateScore(_bonusWordLength, won ? attempts : 0),
             ScoreEarned = CalculateScore(_bonusWordLength, won ? attempts : 0),
+            DurationSeconds = _bonusTimerStarted ? GetBonusElapsedSeconds() : null,
             Guesses = [.. _bonusGuesses]
         };
     }
@@ -1514,6 +1674,7 @@ public sealed class MainViewModel : ObservableObject
             Attempts = _infiniteStatus == GameStatus.Won ? _infiniteGuesses.Count : 6,
             Points = 0,
             ScoreEarned = 0,
+            DurationSeconds = _infiniteTimerStarted ? GetInfiniteElapsedSeconds() : null,
             Guesses = [.. _infiniteGuesses]
         };
     }
@@ -1881,6 +2042,12 @@ public sealed class MainViewModel : ObservableObject
         _dailyElapsedSeconds = 0;
         _dailyTimerStarted = false;
         _dailyTimerStartedAt = null;
+        _bonusElapsedSeconds = 0;
+        _bonusTimerStarted = false;
+        _bonusTimerStartedAt = null;
+        _infiniteElapsedSeconds = 0;
+        _infiniteTimerStarted = false;
+        _infiniteTimerStartedAt = null;
         _isBonusActive = false;
         _isInfiniteActive = false;
         _isBonusUnlocked = false;
@@ -2259,6 +2426,7 @@ public sealed class MainViewModel : ObservableObject
         _updatePromptShownThisSession = true;
         CloseOverlays();
         IsSplashVisible = false;
+        IsProfileDialogVisible = false;
         UpdateDialogTitle = "Aggiornamento disponibile";
         AvailableVersionText = $"Nuova versione {update.TargetFullRelease.Version}";
         UpdateDialogMessage = "Puoi aggiornare ora e l'app si riaprira' automaticamente. Storico, punti e impostazioni restano nella cartella dati locale.";
@@ -2266,6 +2434,7 @@ public sealed class MainViewModel : ObservableObject
             ? "Note di versione non disponibili."
             : update.TargetFullRelease.NotesMarkdown;
         UpdateProgressText = string.Empty;
+        UpdateProgressValue = 0;
         IsUpdateBusy = false;
         IsUpdateDialogVisible = true;
     }
@@ -2279,19 +2448,22 @@ public sealed class MainViewModel : ObservableObject
 
         IsUpdateBusy = true;
         UpdateProgressText = "Download aggiornamento...";
+        UpdateProgressValue = 0;
         PersistActiveGameTime();
 
         var result = await _updateService.DownloadAndRestartAsync(
             _pendingUpdate,
             progress => Application.Current.Dispatcher.Invoke(() =>
             {
-                UpdateProgressText = $"Download {progress}%";
+                UpdateProgressValue = Math.Clamp(progress, 0, 100);
+                UpdateProgressText = $"Download {UpdateProgressValue}%";
             }));
 
         if (!result.WasStarted)
         {
             IsUpdateBusy = false;
             UpdateProgressText = string.Empty;
+            UpdateProgressValue = 0;
             UpdateDialogMessage = $"Aggiornamento non riuscito: {result.ErrorMessage ?? "errore sconosciuto"}";
         }
     }
@@ -2301,6 +2473,11 @@ public sealed class MainViewModel : ObservableObject
         IsUpdateDialogVisible = false;
         IsUpdateBusy = false;
         UpdateProgressText = string.Empty;
+        UpdateProgressValue = 0;
+        if (string.IsNullOrWhiteSpace(PlayerName))
+        {
+            IsProfileDialogVisible = true;
+        }
     }
 
     private static bool TryCopyToClipboard(string text)
