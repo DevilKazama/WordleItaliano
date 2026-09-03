@@ -2642,22 +2642,25 @@ public sealed class MainViewModel : ObservableObject
     private string BuildShareText(GameHistoryEntry entry)
     {
         var mode = entry.IsInfinite
-            ? "Infinita"
+            ? "INFINITA"
             : entry.IsBonus
-            ? $"Bonus random {entry.WordLength}"
-            : "Giornaliera";
+            ? $"BONUS {entry.WordLength}"
+            : "GIORNALIERA";
         var score = entry.Won ? $"{entry.Attempts}/6" : "X/6";
-        var timer = entry.DurationSeconds is not null ? $" - {FormatDuration(entry.DurationSeconds.Value)}" : string.Empty;
+        var timer = entry.DurationSeconds is not null ? $" · ⏱ {FormatDuration(entry.DurationSeconds.Value)}" : string.Empty;
         var rows = entry.Guesses.Select(guess => BuildShareRow(guess, entry.Solution));
-        var header = $"Wordle Italiano - {mode} - {entry.Date} - {score}{timer}";
+        var header = $"WORDLE ITALIANO · {mode}";
+        var resultLine = $"{score}{timer}";
         if (!IsCompetitiveEntry(entry))
         {
             return $"{header}{Environment.NewLine}" +
+                   $"{resultLine}{Environment.NewLine}{Environment.NewLine}" +
                    string.Join(Environment.NewLine, rows);
         }
 
         return $"{header}{Environment.NewLine}" +
-               $"+{GetEntryScore(entry)} pt | {GetShareMonthLabel(entry)}: {GetShareMonthScore(entry)} pt{Environment.NewLine}" +
+               $"{resultLine} · +{GetEntryScore(entry)} pt{Environment.NewLine}" +
+               $"{GetShareMonthLabel(entry)} · {GetShareMonthScore(entry)} pt{Environment.NewLine}{Environment.NewLine}" +
                string.Join(Environment.NewLine, rows);
     }
 

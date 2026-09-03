@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.5.2",
+    "title": "Novita' della versione 1.5.2",
+    "items": [
+      "Risultato copiato piu' leggibile e ordinato, con titolo, risultato, timer, punti e griglia separati.",
+      "La modalita' Infinita resta esclusa dai punti competitivi anche nel testo condiviso."
+    ]
+  },
+  {
     "version": "1.5.1",
     "title": "Novita' della versione 1.5.1",
     "items": [
