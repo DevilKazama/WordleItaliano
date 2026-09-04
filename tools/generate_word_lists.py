@@ -13,6 +13,9 @@ SOURCE_FILES = {
     "curated": "pietro_curated.txt",
     "word_list": "pietro_word_list.txt",
     "large": "pietro_60000.txt",
+    "morphit": "italian_it_it_morphit.txt",
+    "napolux_large": "napolux_280000_parole_italiane.txt",
+    "napolux_verbs": "napolux_coniugazione_verbi.txt",
 }
 
 PYDEPS_DIR = ROOT / ".tmp" / "pydeps"
@@ -249,6 +252,14 @@ def load_source(name: str) -> set[str]:
     return words
 
 
+def load_optional_source(name: str) -> set[str]:
+    path = SOURCE_DIR / SOURCE_FILES[name]
+    if not path.exists():
+        return set()
+
+    return load_source(name)
+
+
 def is_basic_word(word: str, length: int) -> bool:
     return (
         len(word) == length
@@ -309,12 +320,17 @@ def main() -> None:
     curated = load_source("curated")
     word_list = load_source("word_list")
     large = load_source("large")
+    accepted_extra_sources = (
+        load_optional_source("morphit")
+        | load_optional_source("napolux_large")
+        | load_optional_source("napolux_verbs")
+    )
 
     valid_5 = sorted(
-        word for word in word_list | large if is_accepted_word(word, 5)
+        word for word in word_list | large | accepted_extra_sources if is_accepted_word(word, 5)
     )
-    valid_6 = sorted(word for word in large if is_accepted_word(word, 6))
-    valid_7 = sorted(word for word in large if is_accepted_word(word, 7))
+    valid_6 = sorted(word for word in large | accepted_extra_sources if is_accepted_word(word, 6))
+    valid_7 = sorted(word for word in large | accepted_extra_sources if is_accepted_word(word, 7))
 
     valid_5_set = set(valid_5)
     daily_5 = sorted(

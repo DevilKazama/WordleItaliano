@@ -11,5 +11,9 @@ Fonti principali:
 
 - `pietroppeter/wordle-it`, soprattutto `dict/curated.txt` per le soluzioni da 5 lettere.
 - `pietroppeter/wordle-it`, `dict/word_list.txt` e `dict/60_000_parole.txt` per parole accettate e bonus.
+- `FredrikBorgstrom/dict-it-it`, derivato da Morph-it!, per ampliare le parole accettate con forme
+  flesse filtrate senza nomi propri.
+- `napolux/paroleitaliane`, in particolare `280000_parole_italiane.txt` e `coniugazione_verbi.txt`,
+  per ampliare le parole accettate e le coniugazioni comuni.
 
 La rigenerazione e' gestita da `tools/generate_word_lists.py`. Se trovi una parola da escludere, aggiungila alla `BLOCKLIST` dello script e rigenera i JSON.
