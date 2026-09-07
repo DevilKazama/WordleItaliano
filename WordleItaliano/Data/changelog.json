@@ -1,11 +1,18 @@
 [
   {
+    "version": "1.5.6",
+    "title": "Novita' della versione 1.5.6",
+    "items": [
+      "Il Changelog mostra solo le novita' utili per chi gioca.",
+      "Le descrizioni degli aggiornamenti sono piu' brevi e piu' chiare."
+    ]
+  },
+  {
     "version": "1.5.5",
     "title": "Novita' della versione 1.5.5",
     "items": [
-      "Corretto il pulsante Changelog: ora mostra davvero le ultime novita'.",
-      "Corretto il popup dopo aggiornamento: alla prima apertura spiega cosa e' cambiato.",
-      "Le note delle versioni restano scritte in modo semplice, pensate per chi gioca."
+      "Il pulsante Changelog ora mostra correttamente gli ultimi aggiornamenti.",
+      "Dopo un aggiornamento, alla prima apertura appare di nuovo il riepilogo delle novita'."
     ]
   },
   {
@@ -13,16 +20,15 @@
     "title": "Novita' della versione 1.5.4",
     "items": [
       "Dopo un aggiornamento l'app mostra una finestra con le novita' principali.",
-      "Nelle impostazioni c'e' il nuovo pulsante Changelog per rileggere gli ultimi aggiornamenti quando vuoi.",
-      "Le note sono scritte in modo semplice, per capire subito cosa cambia nel gioco."
+      "Nelle impostazioni c'e' il nuovo pulsante Changelog per rileggere gli ultimi aggiornamenti quando vuoi."
     ]
   },
   {
     "version": "1.5.3",
     "title": "Novita' della versione 1.5.3",
     "items": [
-      "Dizionario dei tentativi ampliato con molte piu' parole italiane comuni e coniugazioni.",
-      "Le parole giornaliere e bonus restano selezionate dalle liste curate, quindi l'ampliamento non rende piu' strane le soluzioni."
+      "Il gioco accetta molte piu' parole italiane comuni nei tentativi.",
+      "Sono state aggiunte molte coniugazioni, per esempio parole come 'morirai'."
     ]
   },
   {
@@ -37,8 +43,8 @@
     "version": "1.5.1",
     "title": "Novita' della versione 1.5.1",
     "items": [
-      "Popup aggiornamento piu' pulito: rimosso il riquadro note vuoto.",
-      "Il changelog dettagliato resta visibile dopo il riavvio dell'app."
+      "La finestra degli aggiornamenti e' piu' pulita.",
+      "Le novita' dell'aggiornamento restano visibili dopo il riavvio dell'app."
     ]
   },
   {
