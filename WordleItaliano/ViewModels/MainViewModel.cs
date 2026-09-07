@@ -37,6 +37,8 @@ public sealed class MainViewModel : ObservableObject
     private int _currentWordLength = 5;
     private int _selectedColumn;
     private double _boardWidth = 350;
+    private double _boardHeight = 420;
+    private double _tileFontSize = 32;
     private string _currentSolution = string.Empty;
     private GameStatus _dailyStatus = GameStatus.Playing;
     private GameStatus _bonusStatus = GameStatus.Playing;
@@ -61,6 +63,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isDictionaryToggleVisible;
     private bool _isDictionaryCardVisible;
     private bool _isDictionaryStatusVisible;
+    private bool _isGameActionsPanelVisible;
     private bool _dailyStatisticsAlreadyRecorded;
     private bool _isClipboardCopyRunning;
     private int _dailyElapsedSeconds;
@@ -420,6 +423,18 @@ public sealed class MainViewModel : ObservableObject
         private set => SetProperty(ref _boardWidth, value);
     }
 
+    public double BoardHeight
+    {
+        get => _boardHeight;
+        private set => SetProperty(ref _boardHeight, value);
+    }
+
+    public double TileFontSize
+    {
+        get => _tileFontSize;
+        private set => SetProperty(ref _tileFontSize, value);
+    }
+
     public bool IsBonusPromptVisible
     {
         get => _isBonusPromptVisible;
@@ -441,8 +456,16 @@ public sealed class MainViewModel : ObservableObject
     public bool IsVirtualKeyboardVisible
     {
         get => _isVirtualKeyboardVisible;
-        set => SetProperty(ref _isVirtualKeyboardVisible, value);
+        set
+        {
+            if (SetProperty(ref _isVirtualKeyboardVisible, value))
+            {
+                OnPropertyChanged(nameof(IsVirtualKeyboardActuallyVisible));
+            }
+        }
     }
+
+    public bool IsVirtualKeyboardActuallyVisible => IsVirtualKeyboardVisible && !IsDictionaryCardVisible;
 
     public bool IsStatisticsVisible
     {
@@ -567,13 +590,25 @@ public sealed class MainViewModel : ObservableObject
     public bool IsDictionaryCardVisible
     {
         get => _isDictionaryCardVisible;
-        set => SetProperty(ref _isDictionaryCardVisible, value);
+        set
+        {
+            if (SetProperty(ref _isDictionaryCardVisible, value))
+            {
+                OnPropertyChanged(nameof(IsVirtualKeyboardActuallyVisible));
+            }
+        }
     }
 
     public bool IsDictionaryStatusVisible
     {
         get => _isDictionaryStatusVisible;
         set => SetProperty(ref _isDictionaryStatusVisible, value);
+    }
+
+    public bool IsGameActionsPanelVisible
+    {
+        get => _isGameActionsPanelVisible;
+        set => SetProperty(ref _isGameActionsPanelVisible, value);
     }
 
     public string StreakLineText
@@ -1549,6 +1584,12 @@ public sealed class MainViewModel : ObservableObject
         RefreshStreakLine();
         RefreshScoreLine();
         RefreshDictionaryPanel();
+        IsGameActionsPanelVisible =
+            IsDictionaryPanelVisible ||
+            IsCurrentResultCopyVisible ||
+            IsBonusViewButtonVisible ||
+            IsDailyViewButtonVisible ||
+            IsNewInfiniteButtonVisible;
     }
 
     private void RefreshDictionaryPanel()
@@ -1715,11 +1756,18 @@ public sealed class MainViewModel : ObservableObject
         BoardColumns = wordLength;
         var tileSize = wordLength switch
         {
-            5 => 62,
-            6 => 54,
-            _ => 48
+            5 => 96,
+            6 => 78,
+            _ => 68
         };
         BoardWidth = (tileSize + 8) * wordLength;
+        BoardHeight = (tileSize + 8) * 6;
+        TileFontSize = wordLength switch
+        {
+            5 => 48,
+            6 => 40,
+            _ => 34
+        };
         _currentRow = 0;
         _selectedColumn = 0;
         Tiles.Clear();

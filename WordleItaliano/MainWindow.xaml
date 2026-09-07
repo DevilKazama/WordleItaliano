@@ -89,7 +89,7 @@
         <Border Grid.Row="0"
                 BorderThickness="0,0,0,1"
                 BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}">
-            <DockPanel Margin="14,10">
+            <DockPanel Margin="14,4">
                 <TextBlock DockPanel.Dock="Left"
                            Text="Wordle Italiano"
                            FontSize="22"
@@ -108,16 +108,15 @@
             </DockPanel>
         </Border>
 
-        <Grid Grid.Row="1" Margin="18">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="*" />
-            </Grid.RowDefinitions>
+        <ScrollViewer Grid.Row="1"
+                      HorizontalScrollBarVisibility="Disabled"
+                      VerticalScrollBarVisibility="Auto">
+            <StackPanel Margin="18,4,18,4">
 
-            <StackPanel Grid.Row="0" HorizontalAlignment="Center" Margin="0,8,0,14">
+            <StackPanel HorizontalAlignment="Center" Margin="0,0,0,2">
                 <Border HorizontalAlignment="Center"
-                        Padding="10,4"
-                        Margin="0,0,0,8"
+                        Padding="10,2"
+                        Margin="0,0,0,3"
                         CornerRadius="6"
                         Background="#538D4E">
                     <StackPanel Orientation="Horizontal">
@@ -141,156 +140,195 @@
                            TextAlignment="Center"
                            FontSize="13"
                            FontWeight="SemiBold"
-                           Margin="0,6,0,0"
+                           Margin="0,1,0,0"
                            Visibility="{Binding IsDailyTimerVisible, Converter={StaticResource BoolVisibility}}"
                            Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
                 <TextBlock Text="{Binding StreakLineText}"
                            TextAlignment="Center"
                            FontSize="13"
                            FontWeight="SemiBold"
-                           Margin="0,6,0,0"
+                           Margin="0,1,0,0"
                            Visibility="{Binding IsStreakLineVisible, Converter={StaticResource BoolVisibility}}"
                            Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
                 <TextBlock Text="{Binding ScoreLineText}"
                            TextAlignment="Center"
                            FontSize="13"
                            FontWeight="SemiBold"
-                           Margin="0,6,0,0"
+                           Margin="0,1,0,0"
                            Visibility="{Binding IsScoreLineVisible, Converter={StaticResource BoolVisibility}}"
                            Foreground="#538D4E" />
-                <StackPanel Margin="0,10,0,0"
-                            Width="420"
-                            MaxWidth="420"
-                            Visibility="{Binding IsDictionaryPanelVisible, Converter={StaticResource BoolVisibility}}">
-                    <TextBlock Text="{Binding DictionarySolutionText}"
-                               TextAlignment="Center"
-                               FontSize="13"
-                               FontWeight="SemiBold"
-                               TextWrapping="Wrap"
-                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
-                    <Button Content="Scopri il significato"
-                            Command="{Binding ShowDefinitionCommand}"
-                            Visibility="{Binding IsDictionaryToggleVisible, Converter={StaticResource BoolVisibility}}"
-                            Style="{StaticResource TopButtonStyle}"
-                            Padding="9,6"
-                            Margin="0,6,0,0"
-                            HorizontalAlignment="Center" />
-                    <Border Margin="0,8,0,0"
-                            Padding="12,10"
-                            CornerRadius="8"
-                            BorderThickness="1"
-                            Visibility="{Binding IsDictionaryCardVisible, Converter={StaticResource BoolVisibility}}"
-                            Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
-                            BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}">
-                        <StackPanel>
-                            <DockPanel LastChildFill="True">
-                                <Button DockPanel.Dock="Right"
-                                        Content="Nascondi"
-                                        Command="{Binding HideDefinitionCommand}"
-                                        Style="{StaticResource TopButtonStyle}"
-                                        Padding="8,5"
-                                        Margin="8,0,0,0"
-                                        BorderThickness="0"
-                                        Background="Transparent"
-                                        Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}"
-                                        Opacity="0.76" />
-                                <StackPanel>
-                                    <TextBlock Text="{Binding DictionaryWordText}"
-                                               FontSize="15"
-                                               FontWeight="Black"
-                                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
-                                    <TextBlock Text="{Binding DictionaryPartOfSpeechText}"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"
-                                               Margin="0,2,0,0"
-                                               TextWrapping="Wrap"
-                                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
-                                </StackPanel>
-                            </DockPanel>
-                            <TextBlock Text="{Binding DictionaryDefinitionText}"
-                                       FontSize="13"
-                                       Margin="0,8,0,0"
-                                       TextWrapping="Wrap"
-                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
-                            <TextBlock Text="{Binding DictionaryExampleText}"
-                                       FontSize="12"
-                                       FontStyle="Italic"
-                                       Margin="0,8,0,0"
-                                       TextWrapping="Wrap"
-                                       Visibility="{Binding IsDictionaryExampleVisible, Converter={StaticResource BoolVisibility}}"
-                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
-                            <TextBlock Text="{Binding DictionaryStatusText}"
-                                       FontSize="13"
-                                       Margin="0,8,0,0"
-                                       TextWrapping="Wrap"
-                                       Visibility="{Binding IsDictionaryStatusVisible, Converter={StaticResource BoolVisibility}}"
-                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-                <WrapPanel HorizontalAlignment="Center" Margin="0,10,0,0">
-                    <Button Content="Copia risultato"
-                            Command="{Binding CopyCurrentResultCommand}"
-                            Visibility="{Binding IsCurrentResultCopyVisible, Converter={StaticResource BoolVisibility}}"
-                            Style="{StaticResource TopButtonStyle}" />
-                    <Button Content="Vedi bonus"
-                            Command="{Binding ViewBonusCommand}"
-                            Visibility="{Binding IsBonusViewButtonVisible, Converter={StaticResource BoolVisibility}}"
-                            Style="{StaticResource TopButtonStyle}" />
-                    <Button Content="Vedi giornaliera"
-                            Command="{Binding ViewDailyCommand}"
-                            Visibility="{Binding IsDailyViewButtonVisible, Converter={StaticResource BoolVisibility}}"
-                            Style="{StaticResource TopButtonStyle}" />
-                    <Button Content="Nuova infinita"
-                            Command="{Binding StartInfiniteCommand}"
-                            Visibility="{Binding IsNewInfiniteButtonVisible, Converter={StaticResource BoolVisibility}}"
-                            Style="{StaticResource TopButtonStyle}" />
-                </WrapPanel>
             </StackPanel>
 
-            <Viewbox Grid.Row="1" Stretch="Uniform" MaxHeight="430">
-                <ItemsControl x:Name="Board" ItemsSource="{Binding Tiles}" Width="{Binding BoardWidth}" Height="420">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <UniformGrid Rows="6" Columns="{Binding DataContext.BoardColumns, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border Width="{Binding Size}"
-                                    Height="{Binding Size}"
-                                    Margin="4"
-                                    MouseLeftButtonDown="Tile_MouseLeftButtonDown"
-                                    Cursor="Hand">
-                                <Border.Style>
-                                    <Style TargetType="Border">
-                                        <Setter Property="BorderThickness" Value="2" />
-                                        <Setter Property="Background" Value="{Binding State, Converter={StaticResource TileBrush}}" />
-                                        <Setter Property="BorderBrush" Value="{Binding State, Converter={StaticResource TileBorderBrush}}" />
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="BorderThickness" Value="4" />
-                                                <Setter Property="BorderBrush" Value="#4A90E2" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </Border.Style>
-                                <TextBlock Text="{Binding Letter}"
-                                           HorizontalAlignment="Center"
-                                           VerticalAlignment="Center"
-                                           FontSize="32"
-                                           FontWeight="Black"
-                                           Foreground="{Binding State, Converter={StaticResource TileForeground}}" />
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </Viewbox>
-        </Grid>
+            <Grid Grid.Row="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="2"
-                    Margin="10,0,10,16"
-                    Visibility="{Binding IsVirtualKeyboardVisible, Converter={StaticResource BoolVisibility}}">
+                <Viewbox Grid.Row="0"
+                         Stretch="Uniform"
+                         MaxHeight="320"
+                         HorizontalAlignment="Center"
+                         VerticalAlignment="Top"
+                         Margin="0,0,0,2">
+                    <ItemsControl x:Name="Board" ItemsSource="{Binding Tiles}" Width="{Binding BoardWidth}" Height="{Binding BoardHeight}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <UniformGrid Rows="6" Columns="{Binding DataContext.BoardColumns, RelativeSource={RelativeSource AncestorType=ItemsControl}}" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border Width="{Binding Size}"
+                                        Height="{Binding Size}"
+                                        Margin="4"
+                                        MouseLeftButtonDown="Tile_MouseLeftButtonDown"
+                                        Cursor="Hand">
+                                    <Border.Style>
+                                        <Style TargetType="Border">
+                                            <Setter Property="BorderThickness" Value="2" />
+                                            <Setter Property="Background" Value="{Binding State, Converter={StaticResource TileBrush}}" />
+                                            <Setter Property="BorderBrush" Value="{Binding State, Converter={StaticResource TileBorderBrush}}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                                                    <Setter Property="BorderThickness" Value="4" />
+                                                    <Setter Property="BorderBrush" Value="#4A90E2" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Border.Style>
+                                    <TextBlock Text="{Binding Letter}"
+                                               HorizontalAlignment="Center"
+                                               VerticalAlignment="Center"
+                                               FontSize="{Binding DataContext.TileFontSize, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                               FontWeight="Black"
+                                               Foreground="{Binding State, Converter={StaticResource TileForeground}}" />
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Viewbox>
+
+                <StackPanel Grid.Row="1"
+                            Visibility="{Binding IsGameActionsPanelVisible, Converter={StaticResource BoolVisibility}}">
+                    <StackPanel Width="620"
+                                MaxWidth="620"
+                                HorizontalAlignment="Center"
+                                Margin="0,0,0,0">
+                        <StackPanel Margin="0,0,0,0"
+                                    Visibility="{Binding IsDictionaryPanelVisible, Converter={StaticResource BoolVisibility}}">
+                            <Border Margin="0,0,0,0"
+                                    Width="420"
+                                    Padding="12,10"
+                                    CornerRadius="8"
+                                    BorderThickness="1"
+                                    MaxHeight="155"
+                                    Visibility="{Binding IsDictionaryCardVisible, Converter={StaticResource BoolVisibility}}"
+                                    Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                                    BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}">
+                                <StackPanel>
+                                    <DockPanel LastChildFill="True">
+                                        <Button DockPanel.Dock="Right"
+                                                Content="Nascondi"
+                                                Command="{Binding HideDefinitionCommand}"
+                                                Style="{StaticResource TopButtonStyle}"
+                                                Padding="8,5"
+                                                Margin="8,0,0,0"
+                                                BorderThickness="0"
+                                                Background="Transparent"
+                                                Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}"
+                                                Opacity="0.76" />
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding DictionaryWordText}"
+                                                       FontSize="15"
+                                                       FontWeight="Black"
+                                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                            <TextBlock Text="{Binding DictionaryPartOfSpeechText}"
+                                                       FontSize="12"
+                                                       FontWeight="SemiBold"
+                                                       Margin="0,2,0,0"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                        </StackPanel>
+                                    </DockPanel>
+                                    <ScrollViewer Margin="0,8,0,0"
+                                                  MaxHeight="95"
+                                                  HorizontalScrollBarVisibility="Disabled"
+                                                  VerticalScrollBarVisibility="Auto">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding DictionaryDefinitionText}"
+                                                       FontSize="13"
+                                                       TextWrapping="Wrap"
+                                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                            <TextBlock Text="{Binding DictionaryExampleText}"
+                                                       FontSize="12"
+                                                       FontStyle="Italic"
+                                                       Margin="0,8,0,0"
+                                                       TextWrapping="Wrap"
+                                                       Visibility="{Binding IsDictionaryExampleVisible, Converter={StaticResource BoolVisibility}}"
+                                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                            <TextBlock Text="{Binding DictionaryStatusText}"
+                                                       FontSize="13"
+                                                       Margin="0,8,0,0"
+                                                       TextWrapping="Wrap"
+                                                       Visibility="{Binding IsDictionaryStatusVisible, Converter={StaticResource BoolVisibility}}"
+                                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                        </StackPanel>
+                                    </ScrollViewer>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                        <WrapPanel HorizontalAlignment="Center" Margin="0,4,0,0">
+                            <TextBlock Text="{Binding DictionarySolutionText}"
+                                       TextAlignment="Center"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"
+                                       TextWrapping="Wrap"
+                                       Visibility="{Binding IsDictionaryToggleVisible, Converter={StaticResource BoolVisibility}}"
+                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                            <Button Content="Scopri il significato"
+                                    Command="{Binding ShowDefinitionCommand}"
+                                    Visibility="{Binding IsDictionaryToggleVisible, Converter={StaticResource BoolVisibility}}"
+                                    Style="{StaticResource TopButtonStyle}"
+                                    Padding="8,4"
+                                    Margin="0,0,4,0"
+                                    HorizontalAlignment="Center" />
+                            <Button Content="Copia risultato"
+                                    Command="{Binding CopyCurrentResultCommand}"
+                                    Visibility="{Binding IsCurrentResultCopyVisible, Converter={StaticResource BoolVisibility}}"
+                                    Style="{StaticResource TopButtonStyle}"
+                                    Padding="8,4"
+                                    Margin="4,0" />
+                            <Button Content="Vedi bonus"
+                                    Command="{Binding ViewBonusCommand}"
+                                    Visibility="{Binding IsBonusViewButtonVisible, Converter={StaticResource BoolVisibility}}"
+                                    Style="{StaticResource TopButtonStyle}"
+                                    Padding="8,4"
+                                    Margin="4,0" />
+                            <Button Content="Vedi giornaliera"
+                                    Command="{Binding ViewDailyCommand}"
+                                    Visibility="{Binding IsDailyViewButtonVisible, Converter={StaticResource BoolVisibility}}"
+                                    Style="{StaticResource TopButtonStyle}"
+                                    Padding="8,4"
+                                    Margin="4,0" />
+                            <Button Content="Nuova infinita"
+                                    Command="{Binding StartInfiniteCommand}"
+                                    Visibility="{Binding IsNewInfiniteButtonVisible, Converter={StaticResource BoolVisibility}}"
+                                    Style="{StaticResource TopButtonStyle}"
+                                    Padding="8,4"
+                                    Margin="4,0" />
+                        </WrapPanel>
+                    </StackPanel>
+                </StackPanel>
+            </Grid>
+            </StackPanel>
+        </ScrollViewer>
+
+            <StackPanel Grid.Row="2"
+                    Margin="10,2,10,4"
+                    Visibility="{Binding IsVirtualKeyboardActuallyVisible, Converter={StaticResource BoolVisibility}}">
             <ItemsControl ItemsSource="{Binding KeyboardRows}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
