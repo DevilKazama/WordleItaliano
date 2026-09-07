@@ -17,5 +17,8 @@ public sealed class GameHistoryEntry
     public int? StreakAtDate { get; set; }
     public int? StreakMultiplierPercent { get; set; }
     public int? DurationSeconds { get; set; }
+    public bool IsPerfectShot { get; set; }
+    public string PerfectShotPrizeText { get; set; } = string.Empty;
+    public bool IsPerfectShotPrizePending { get; set; }
     public List<string> Guesses { get; set; } = [];
 }

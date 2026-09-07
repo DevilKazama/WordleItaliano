@@ -10,6 +10,7 @@ public sealed class SavedGame
     public GameStatus Status { get; set; } = GameStatus.Playing;
     public int DailyElapsedSeconds { get; set; }
     public bool DailyTimerStarted { get; set; }
+    public PerfectShotState DailyPerfectShot { get; set; } = new();
     public BonusGame Bonus { get; set; } = new();
     public InfiniteGame Infinite { get; set; } = new();
 }

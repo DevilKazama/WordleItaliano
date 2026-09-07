@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.5.11",
+    "title": "Colpo Perfetto",
+    "items": [
+      "Introdotto il Colpo Perfetto: indovinare Giornaliera o Bonus al primo tentativo attiva una celebrazione speciale.",
+      "Aggiunta la scelta del premio per festeggiare il primo 1/6 del mese tra colleghi.",
+      "Il premio scelto viene salvato insieme alla partita e mostrato nel risultato condiviso.",
+      "Aggiunto un formato di condivisione dedicato ai Colpi Perfetti.",
+      "Aggiunte nuove animazioni celebrative con effetti, particelle e transizioni dedicate."
+    ]
+  },
+  {
     "version": "1.5.10",
     "title": "Novita' della versione 1.5.10",
     "items": [

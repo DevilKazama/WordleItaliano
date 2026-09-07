@@ -9,4 +9,5 @@ public sealed class BonusGame
     public GameStatus Status { get; set; } = GameStatus.Playing;
     public int ElapsedSeconds { get; set; }
     public bool TimerStarted { get; set; }
+    public PerfectShotState PerfectShot { get; set; } = new();
 }

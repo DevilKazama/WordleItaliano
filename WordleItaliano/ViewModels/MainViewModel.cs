@@ -108,6 +108,13 @@ public sealed class MainViewModel : ObservableObject
     private string _dictionaryExampleText = string.Empty;
     private string _dictionaryStatusText = string.Empty;
     private string _dictionaryCurrentWord = string.Empty;
+    private PerfectShotState _dailyPerfectShot = new();
+    private PerfectShotState _bonusPerfectShot = new();
+    private bool _isPerfectShotCelebrationVisible;
+    private bool _isPerfectShotPrizeDialogVisible;
+    private bool _pendingPerfectShotIsBonus;
+    private string _perfectShotPrizeDraft = string.Empty;
+    private string _perfectShotModeText = string.Empty;
     private bool _isStreakLineVisible;
     private string _modeBadgeText = "Giornaliera";
     private string _modeBadgeDetail = "Sfida quotidiana";
@@ -251,6 +258,8 @@ public sealed class MainViewModel : ObservableObject
         DismissChangelogCommand = new RelayCommand(_ => DismissChangelog());
         ShowDefinitionCommand = new RelayCommand(_ => ShowCurrentDefinition());
         HideDefinitionCommand = new RelayCommand(_ => HideCurrentDefinition());
+        ConfirmPerfectShotPrizeCommand = new RelayCommand(_ => CompletePerfectShotPrize(false));
+        DecidePerfectShotPrizeLaterCommand = new RelayCommand(_ => CompletePerfectShotPrize(true));
 
         LoadOrStartGame();
         RefreshStatisticsView();
@@ -269,6 +278,7 @@ public sealed class MainViewModel : ObservableObject
     public event EventHandler<int>? RevealRequested;
     public event EventHandler<int>? LetterEntered;
     public event EventHandler<int>? VictoryAnimationRequested;
+    public event EventHandler<int>? PerfectShotAnimationRequested;
     public event EventHandler<int>? DefeatAnimationRequested;
     public ObservableCollection<TileViewModel> Tiles { get; }
     public ObservableCollection<ObservableCollection<KeyboardKeyViewModel>> KeyboardRows { get; }
@@ -318,6 +328,8 @@ public sealed class MainViewModel : ObservableObject
     public ICommand DismissChangelogCommand { get; }
     public ICommand ShowDefinitionCommand { get; }
     public ICommand HideDefinitionCommand { get; }
+    public ICommand ConfirmPerfectShotPrizeCommand { get; }
+    public ICommand DecidePerfectShotPrizeLaterCommand { get; }
 
     public string Message
     {
@@ -605,6 +617,30 @@ public sealed class MainViewModel : ObservableObject
         set => SetProperty(ref _isDictionaryStatusVisible, value);
     }
 
+    public bool IsPerfectShotCelebrationVisible
+    {
+        get => _isPerfectShotCelebrationVisible;
+        set => SetProperty(ref _isPerfectShotCelebrationVisible, value);
+    }
+
+    public bool IsPerfectShotPrizeDialogVisible
+    {
+        get => _isPerfectShotPrizeDialogVisible;
+        set => SetProperty(ref _isPerfectShotPrizeDialogVisible, value);
+    }
+
+    public string PerfectShotPrizeDraft
+    {
+        get => _perfectShotPrizeDraft;
+        set => SetProperty(ref _perfectShotPrizeDraft, value);
+    }
+
+    public string PerfectShotModeText
+    {
+        get => _perfectShotModeText;
+        set => SetProperty(ref _perfectShotModeText, value);
+    }
+
     public bool IsGameActionsPanelVisible
     {
         get => _isGameActionsPanelVisible;
@@ -788,7 +824,9 @@ public sealed class MainViewModel : ObservableObject
             IsSettingsVisible ||
             IsUpdateDialogVisible ||
             IsProfileDialogVisible ||
-            IsChangelogVisible)
+            IsChangelogVisible ||
+            IsPerfectShotCelebrationVisible ||
+            IsPerfectShotPrizeDialogVisible)
         {
             return;
         }
@@ -941,10 +979,13 @@ public sealed class MainViewModel : ObservableObject
         {
             StopCurrentTimer();
             SetCurrentStatus(GameStatus.Won);
+            var attempts = _currentRow + 1;
+            var isPerfectShot = TryMarkCurrentPerfectShot(attempts);
             Message = _isInfiniteActive
                 ? "Infinita vinta. Puoi farne un'altra."
                 : _isBonusActive
-                ? "Bonus vinto: punti aggiornati."
+                ? isPerfectShot ? "Colpo Perfetto!" : "Bonus vinto: punti aggiornati."
+                : isPerfectShot ? "Colpo Perfetto!"
                 : _currentRow switch
                 {
                     0 => "Geniale.",
@@ -957,21 +998,30 @@ public sealed class MainViewModel : ObservableObject
 
             if (_isInfiniteActive)
             {
-                RecordInfinite(true, _currentRow + 1);
+                RecordInfinite(true, attempts);
             }
             else if (_isBonusActive)
             {
-                RecordBonus(true, _currentRow + 1);
+                RecordBonus(true, attempts);
             }
             else
             {
-                RecordDaily(true, _currentRow + 1);
+                RecordDaily(true, attempts);
                 UnlockBonus();
             }
 
             RefreshCopyButtonVisibility();
             SaveGame();
-            VictoryAnimationRequested?.Invoke(this, _currentRow);
+            if (isPerfectShot)
+            {
+                PerfectShotAnimationRequested?.Invoke(this, _currentRow);
+                _ = RunPerfectShotFlowAsync(_isBonusActive);
+            }
+            else
+            {
+                VictoryAnimationRequested?.Invoke(this, _currentRow);
+            }
+
             return;
         }
 
@@ -1319,6 +1369,8 @@ public sealed class MainViewModel : ObservableObject
         _bonusElapsedSeconds = 0;
         _bonusTimerStarted = false;
         _bonusTimerStartedAt = null;
+        _dailyPerfectShot = new PerfectShotState();
+        _bonusPerfectShot = new PerfectShotState();
         _isBonusActive = false;
         _isBonusUnlocked = false;
         _dailyStatisticsAlreadyRecorded = false;
@@ -1373,18 +1425,21 @@ public sealed class MainViewModel : ObservableObject
             : null;
         _dailyGuesses.Clear();
         _dailyGuesses.AddRange(saved.Guesses.Take(6));
+        _dailyPerfectShot = saved.DailyPerfectShot?.Clone() ?? new PerfectShotState();
         _isBonusUnlocked = saved.Bonus.IsUnlocked || _dailyStatus == GameStatus.Won;
         _bonusStatus = saved.Bonus.Status;
         _bonusElapsedSeconds = Math.Max(0, saved.Bonus.ElapsedSeconds);
         _bonusTimerStarted = saved.Bonus.TimerStarted;
         _bonusGuesses.Clear();
         _bonusGuesses.AddRange(saved.Bonus.Guesses.Take(6));
+        _bonusPerfectShot = saved.Bonus.PerfectShot?.Clone() ?? new PerfectShotState();
         if (saved.Bonus.WordLength != _bonusWordLength)
         {
             _bonusStatus = GameStatus.Playing;
             _bonusGuesses.Clear();
             _bonusElapsedSeconds = 0;
             _bonusTimerStarted = false;
+            _bonusPerfectShot = new PerfectShotState();
         }
 
         if (_bonusGuesses.Count > 0 && _bonusStatus == GameStatus.Playing)
@@ -1420,6 +1475,7 @@ public sealed class MainViewModel : ObservableObject
         _storage.SaveStatistics(Statistics);
         RefreshHistoryView();
         RefreshCopyButtonVisibility();
+        ShowPendingPerfectShotPrizeIfNeeded();
     }
 
     private void RestoreInfinite(InfiniteGame infinite)
@@ -1449,6 +1505,7 @@ public sealed class MainViewModel : ObservableObject
         ResumeCurrentTimerIfNeeded();
         Message = _dailyStatus == GameStatus.Playing ? "Indovina la parola di oggi." : Message;
         RefreshCopyButtonVisibility();
+        ShowPendingPerfectShotPrizeIfNeeded();
     }
 
     private void StartBonus()
@@ -1477,6 +1534,7 @@ public sealed class MainViewModel : ObservableObject
         ResumeCurrentTimerIfNeeded();
         Message = $"Bonus random: parola da {_bonusWordLength} lettere.";
         RefreshCopyButtonVisibility();
+        ShowPendingPerfectShotPrizeIfNeeded();
         if (save)
         {
             SaveGame();
@@ -1686,6 +1744,113 @@ public sealed class MainViewModel : ObservableObject
         IsDictionaryToggleVisible = false;
     }
 
+    private bool TryMarkCurrentPerfectShot(int attempts)
+    {
+        if (!PerfectShotService.IsPerfectShot(CurrentStatus == GameStatus.Won, attempts, _isInfiniteActive))
+        {
+            return false;
+        }
+
+        var state = _isBonusActive ? _bonusPerfectShot : _dailyPerfectShot;
+        if (state.IsPerfectShot)
+        {
+            return false;
+        }
+
+        state.IsPerfectShot = true;
+        state.PrizePromptShown = false;
+        state.IsPrizePending = false;
+        state.PrizeText = string.Empty;
+        return true;
+    }
+
+    private async Task RunPerfectShotFlowAsync(bool isBonus)
+    {
+        IsSplashVisible = false;
+        CloseOverlays();
+        IsBonusPromptVisible = false;
+        await Task.Delay(_currentWordLength * 110 + 420);
+        IsPerfectShotCelebrationVisible = true;
+        await Task.Delay(2250);
+        IsPerfectShotCelebrationVisible = false;
+        ShowPerfectShotPrizeDialog(isBonus);
+    }
+
+    private void ShowPendingPerfectShotPrizeIfNeeded()
+    {
+        if (_isInfiniteActive || IsPerfectShotPrizeDialogVisible || IsPerfectShotCelebrationVisible)
+        {
+            return;
+        }
+
+        if (_dailyPerfectShot is { IsPerfectShot: true, PrizePromptShown: false })
+        {
+            ShowPerfectShotPrizeDialog(false);
+            return;
+        }
+
+        if (_bonusPerfectShot is { IsPerfectShot: true, PrizePromptShown: false })
+        {
+            ShowPerfectShotPrizeDialog(true);
+        }
+    }
+
+    private void ShowPerfectShotPrizeDialog(bool isBonus)
+    {
+        var state = isBonus ? _bonusPerfectShot : _dailyPerfectShot;
+        if (!state.IsPerfectShot || state.PrizePromptShown)
+        {
+            return;
+        }
+
+        IsSplashVisible = false;
+        CloseOverlays();
+        IsBonusPromptVisible = false;
+        _pendingPerfectShotIsBonus = isBonus;
+        PerfectShotModeText = isBonus ? "Bonus random" : "Giornaliera";
+        PerfectShotPrizeDraft = state.IsPrizePending ? string.Empty : state.PrizeText;
+        IsPerfectShotPrizeDialogVisible = true;
+    }
+
+    private void CompletePerfectShotPrize(bool decideLater)
+    {
+        if (!IsPerfectShotPrizeDialogVisible)
+        {
+            return;
+        }
+
+        var state = _pendingPerfectShotIsBonus ? _bonusPerfectShot : _dailyPerfectShot;
+        state.IsPerfectShot = true;
+        state.PrizePromptShown = true;
+        var prize = PerfectShotPrizeDraft.Trim();
+        state.IsPrizePending = decideLater || string.IsNullOrWhiteSpace(prize);
+        state.PrizeText = state.IsPrizePending ? string.Empty : prize;
+        IsPerfectShotPrizeDialogVisible = false;
+        PerfectShotPrizeDraft = string.Empty;
+        UpsertHistory(_pendingPerfectShotIsBonus
+            ? CreateBonusHistoryEntry(_bonusStatus == GameStatus.Won, _bonusStatus == GameStatus.Won ? _bonusGuesses.Count : 0)
+            : CreateDailyHistoryEntry(_dailyStatus == GameStatus.Won, _dailyStatus == GameStatus.Won ? _dailyGuesses.Count : 0));
+        _storage.SaveStatistics(Statistics);
+        SaveGame();
+        RefreshHistoryView();
+        if (!_pendingPerfectShotIsBonus && _isBonusUnlocked && _bonusStatus == GameStatus.Playing && _bonusGuesses.Count == 0)
+        {
+            IsBonusPromptVisible = true;
+        }
+    }
+
+    private PerfectShotState GetPerfectShotState(bool isBonus)
+    {
+        return isBonus ? _bonusPerfectShot : _dailyPerfectShot;
+    }
+
+    private void ApplyPerfectShotToEntry(GameHistoryEntry entry, PerfectShotState state)
+    {
+        entry.IsPerfectShot = state.IsPerfectShot;
+        entry.PerfectShotPrizeText = state.PrizeText;
+        entry.IsPerfectShotPrizePending = state.IsPrizePending;
+    }
+
     private void RefreshStreakLine()
     {
         if (_isInfiniteActive)
@@ -1818,6 +1983,7 @@ public sealed class MainViewModel : ObservableObject
             Status = _dailyStatus,
             DailyElapsedSeconds = GetDailyElapsedSeconds(),
             DailyTimerStarted = _dailyTimerStarted,
+            DailyPerfectShot = _dailyPerfectShot.Clone(),
             Bonus = new BonusGame
             {
                 IsUnlocked = _isBonusUnlocked,
@@ -1826,7 +1992,8 @@ public sealed class MainViewModel : ObservableObject
                 Guesses = [.. _bonusGuesses],
                 Status = _bonusStatus,
                 ElapsedSeconds = GetBonusElapsedSeconds(),
-                TimerStarted = _bonusTimerStarted
+                TimerStarted = _bonusTimerStarted,
+                PerfectShot = _bonusPerfectShot.Clone()
             },
             Infinite = new InfiniteGame
             {
@@ -1931,7 +2098,7 @@ public sealed class MainViewModel : ObservableObject
         var streak = GetDailyStreakForDate(_todayKey, won);
         var finalScore = ApplyStreakMultiplier(baseScore, streak);
 
-        return new GameHistoryEntry
+        var entry = new GameHistoryEntry
         {
             Date = _todayKey,
             Solution = _dailySolution,
@@ -1950,6 +2117,8 @@ public sealed class MainViewModel : ObservableObject
             DurationSeconds = _dailyTimerStarted ? GetDailyElapsedSeconds() : null,
             Guesses = [.. _dailyGuesses]
         };
+        ApplyPerfectShotToEntry(entry, _dailyPerfectShot);
+        return entry;
     }
 
     private GameHistoryEntry CreateBonusHistoryEntry(bool won, int attempts)
@@ -1979,6 +2148,7 @@ public sealed class MainViewModel : ObservableObject
         entry.DayFinalScore = currentSnapshot.FinalScore;
         entry.StreakAtDate = currentSnapshot.Streak;
         entry.StreakMultiplierPercent = currentSnapshot.MultiplierPercent;
+        ApplyPerfectShotToEntry(entry, _bonusPerfectShot);
         return entry;
     }
 
@@ -2967,6 +3137,11 @@ public sealed class MainViewModel : ObservableObject
 
     private string BuildShareText(GameHistoryEntry entry)
     {
+        if (entry.IsPerfectShot && IsCompetitiveEntry(entry))
+        {
+            return BuildPerfectShotShareText(entry);
+        }
+
         var mode = entry.IsInfinite
             ? "INFINITA"
             : entry.IsBonus
@@ -3003,6 +3178,36 @@ public sealed class MainViewModel : ObservableObject
                $"Punti di oggi: {dayScore}{Environment.NewLine}" +
                $"{GetShareMonthLabel(entry)}: {GetShareMonthScore(entry)} punti{Environment.NewLine}{Environment.NewLine}" +
                string.Join(Environment.NewLine, rows);
+    }
+
+    private string BuildPerfectShotShareText(GameHistoryEntry entry)
+    {
+        var mode = entry.IsBonus ? $"BONUS {entry.WordLength}" : "GIORNALIERA";
+        var timer = entry.DurationSeconds is not null ? $" · ⏱ {FormatDuration(entry.DurationSeconds.Value)}" : string.Empty;
+        var rows = entry.Guesses.Select(guess => BuildShareRow(guess, entry.Solution));
+        var prize = entry.IsPerfectShotPrizePending || string.IsNullOrWhiteSpace(entry.PerfectShotPrizeText)
+            ? "🎁 Premio: da decidere"
+            : $"🎁 Premio: {entry.PerfectShotPrizeText.Trim()}";
+        var builder = new StringBuilder();
+        builder.AppendLine("🏆 WORDLE ITALIANO · COLPO PERFETTO");
+        builder.AppendLine();
+        builder.AppendLine($"{mode} · 1/6{timer}");
+
+        if (entry.StreakMultiplierPercent is not null && entry.StreakAtDate is not null)
+        {
+            var snapshot = GetDayScoreSnapshot(TryGetHistoryDate(entry.Date) ?? DateOnly.FromDateTime(DateTime.Today), entry);
+            var dayScore = snapshot.BaseScore == snapshot.FinalScore
+                ? $"{snapshot.FinalScore}"
+                : $"{snapshot.BaseScore} -> {snapshot.FinalScore}";
+            builder.AppendLine($"Streak: {snapshot.Streak} {FormatDayWord(snapshot.Streak)} · x{FormatMultiplier(snapshot.MultiplierPercent)}");
+            builder.AppendLine($"Punti di oggi: {dayScore}");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine(string.Join(Environment.NewLine, rows));
+        builder.AppendLine();
+        builder.Append(prize);
+        return builder.ToString();
     }
 
     private static int CalculateScore(int wordLength, int attempts)
@@ -3274,3 +3479,5 @@ public sealed class MainViewModel : ObservableObject
         return settings;
     }
 }
+
+
