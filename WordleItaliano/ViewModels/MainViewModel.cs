@@ -163,7 +163,7 @@ public sealed class MainViewModel : ObservableObject
             new StatCardViewModel("Sconfitte"),
             new StatCardViewModel("Vittorie"),
             new StatCardViewModel("Media"),
-            new StatCardViewModel("Streak"),
+            new StatCardViewModel("Streak max"),
             new StatCardViewModel("Entro 3"),
             new StatCardViewModel("Media pt")
         ];

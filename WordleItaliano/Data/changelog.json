@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.5.8",
+    "title": "Novita' della versione 1.5.8",
+    "items": [
+      "Nel Wrapped la card della streak ora si chiama Streak max, cosi' e' chiaro che indica il record del periodo."
+    ]
+  },
+  {
     "version": "1.5.7",
     "title": "Novita' della versione 1.5.7",
     "items": [
