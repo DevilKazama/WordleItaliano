@@ -23,6 +23,7 @@ public sealed class MainViewModel : ObservableObject
     private readonly AppUpdateService _updateService;
     private readonly UserSettings _userSettings;
     private readonly ChangelogService _changelogService;
+    private readonly DictionaryService _dictionaryService;
     private UpdateInfo? _pendingUpdate;
     private string _dailySolution = string.Empty;
     private string _bonusSolution = string.Empty;
@@ -56,6 +57,10 @@ public sealed class MainViewModel : ObservableObject
     private bool _isDailyViewButtonVisible;
     private bool _isNewInfiniteButtonVisible;
     private bool _isScoreLineVisible;
+    private bool _isDictionaryPanelVisible;
+    private bool _isDictionaryToggleVisible;
+    private bool _isDictionaryCardVisible;
+    private bool _isDictionaryStatusVisible;
     private bool _dailyStatisticsAlreadyRecorded;
     private bool _isClipboardCopyRunning;
     private int _dailyElapsedSeconds;
@@ -93,6 +98,13 @@ public sealed class MainViewModel : ObservableObject
     private string _monthlyRecapTitle = string.Empty;
     private string _scoreLineText = string.Empty;
     private string _streakLineText = string.Empty;
+    private string _dictionarySolutionText = string.Empty;
+    private string _dictionaryWordText = string.Empty;
+    private string _dictionaryPartOfSpeechText = string.Empty;
+    private string _dictionaryDefinitionText = string.Empty;
+    private string _dictionaryExampleText = string.Empty;
+    private string _dictionaryStatusText = string.Empty;
+    private string _dictionaryCurrentWord = string.Empty;
     private bool _isStreakLineVisible;
     private string _modeBadgeText = "Giornaliera";
     private string _modeBadgeDetail = "Sfida quotidiana";
@@ -118,6 +130,7 @@ public sealed class MainViewModel : ObservableObject
         _userSettings = _storage.LoadUserSettings();
         _updateService = new AppUpdateService(_settings.UpdateRepositoryUrl);
         _changelogService = new ChangelogService();
+        _dictionaryService = new DictionaryService();
         PlayerName = _userSettings.PlayerName.Trim();
         ProfileNameDraft = PlayerName;
         IsProfileDialogVisible = string.IsNullOrWhiteSpace(PlayerName);
@@ -233,6 +246,8 @@ public sealed class MainViewModel : ObservableObject
         SaveProfileCommand = new RelayCommand(_ => SaveProfileName());
         ShowChangelogCommand = new RelayCommand(_ => ShowFullChangelog());
         DismissChangelogCommand = new RelayCommand(_ => DismissChangelog());
+        ShowDefinitionCommand = new RelayCommand(_ => ShowCurrentDefinition());
+        HideDefinitionCommand = new RelayCommand(_ => HideCurrentDefinition());
 
         LoadOrStartGame();
         RefreshStatisticsView();
@@ -298,6 +313,8 @@ public sealed class MainViewModel : ObservableObject
     public ICommand SaveProfileCommand { get; }
     public ICommand ShowChangelogCommand { get; }
     public ICommand DismissChangelogCommand { get; }
+    public ICommand ShowDefinitionCommand { get; }
+    public ICommand HideDefinitionCommand { get; }
 
     public string Message
     {
@@ -535,6 +552,30 @@ public sealed class MainViewModel : ObservableObject
         set => SetProperty(ref _isScoreLineVisible, value);
     }
 
+    public bool IsDictionaryPanelVisible
+    {
+        get => _isDictionaryPanelVisible;
+        set => SetProperty(ref _isDictionaryPanelVisible, value);
+    }
+
+    public bool IsDictionaryToggleVisible
+    {
+        get => _isDictionaryToggleVisible;
+        set => SetProperty(ref _isDictionaryToggleVisible, value);
+    }
+
+    public bool IsDictionaryCardVisible
+    {
+        get => _isDictionaryCardVisible;
+        set => SetProperty(ref _isDictionaryCardVisible, value);
+    }
+
+    public bool IsDictionaryStatusVisible
+    {
+        get => _isDictionaryStatusVisible;
+        set => SetProperty(ref _isDictionaryStatusVisible, value);
+    }
+
     public string StreakLineText
     {
         get => _streakLineText;
@@ -545,6 +586,50 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _isStreakLineVisible;
         set => SetProperty(ref _isStreakLineVisible, value);
+    }
+
+    public string DictionarySolutionText
+    {
+        get => _dictionarySolutionText;
+        set => SetProperty(ref _dictionarySolutionText, value);
+    }
+
+    public string DictionaryWordText
+    {
+        get => _dictionaryWordText;
+        set => SetProperty(ref _dictionaryWordText, value);
+    }
+
+    public string DictionaryPartOfSpeechText
+    {
+        get => _dictionaryPartOfSpeechText;
+        set => SetProperty(ref _dictionaryPartOfSpeechText, value);
+    }
+
+    public string DictionaryDefinitionText
+    {
+        get => _dictionaryDefinitionText;
+        set => SetProperty(ref _dictionaryDefinitionText, value);
+    }
+
+    public string DictionaryExampleText
+    {
+        get => _dictionaryExampleText;
+        set
+        {
+            if (SetProperty(ref _dictionaryExampleText, value))
+            {
+                OnPropertyChanged(nameof(IsDictionaryExampleVisible));
+            }
+        }
+    }
+
+    public bool IsDictionaryExampleVisible => !string.IsNullOrWhiteSpace(DictionaryExampleText);
+
+    public string DictionaryStatusText
+    {
+        get => _dictionaryStatusText;
+        set => SetProperty(ref _dictionaryStatusText, value);
     }
 
     public string ToastMessage
@@ -1463,6 +1548,101 @@ public sealed class MainViewModel : ObservableObject
         IsNewInfiniteButtonVisible = _isInfiniteActive && _infiniteStatus != GameStatus.Playing;
         RefreshStreakLine();
         RefreshScoreLine();
+        RefreshDictionaryPanel();
+    }
+
+    private void RefreshDictionaryPanel()
+    {
+        if (_isInfiniteActive || CurrentStatus == GameStatus.Playing || SubmittedGuesses.Count == 0)
+        {
+            ClearDictionaryPanel();
+            return;
+        }
+
+        var solution = WordRepository.Normalize(_currentSolution);
+        if (string.IsNullOrWhiteSpace(solution))
+        {
+            ClearDictionaryPanel();
+            return;
+        }
+
+        if (!string.Equals(_dictionaryCurrentWord, solution, StringComparison.OrdinalIgnoreCase))
+        {
+            HideCurrentDefinition();
+            _dictionaryCurrentWord = solution;
+        }
+
+        var label = CurrentStatus == GameStatus.Won ? "Parola indovinata" : "La parola era";
+        DictionarySolutionText = $"{label}: {solution.ToUpperInvariant()}";
+        IsDictionaryPanelVisible = true;
+        IsDictionaryToggleVisible = !IsDictionaryCardVisible;
+    }
+
+    private void ShowCurrentDefinition()
+    {
+        if (_isInfiniteActive || CurrentStatus == GameStatus.Playing || SubmittedGuesses.Count == 0)
+        {
+            ClearDictionaryPanel();
+            return;
+        }
+
+        var solution = WordRepository.Normalize(_currentSolution);
+        DictionaryStatusText = "Caricamento...";
+        IsDictionaryStatusVisible = true;
+        IsDictionaryCardVisible = true;
+        IsDictionaryToggleVisible = false;
+
+        var entry = _dictionaryService.Find(solution);
+        if (entry is null)
+        {
+            DictionaryWordText = solution.ToUpperInvariant();
+            DictionaryPartOfSpeechText = string.Empty;
+            DictionaryDefinitionText = string.Empty;
+            DictionaryExampleText = string.Empty;
+            DictionaryStatusText = "Definizione non disponibile.";
+            return;
+        }
+
+        DictionaryWordText = string.IsNullOrWhiteSpace(entry.DisplayWord)
+            ? solution.ToUpperInvariant()
+            : entry.DisplayWord.ToUpperInvariant();
+        DictionaryPartOfSpeechText = entry.PartOfSpeech;
+        var definitions = entry.Definitions
+            .Where(definition => !string.IsNullOrWhiteSpace(definition))
+            .Take(3)
+            .ToArray();
+        DictionaryDefinitionText = definitions.Length switch
+        {
+            0 => entry.Definition,
+            1 => definitions[0],
+            _ => string.Join(
+                $"{Environment.NewLine}{Environment.NewLine}",
+                definitions.Select((definition, index) => $"{index + 1}. {definition}"))
+        };
+        DictionaryExampleText = entry.Example;
+        DictionaryStatusText = string.Empty;
+        IsDictionaryStatusVisible = false;
+    }
+
+    private void HideCurrentDefinition()
+    {
+        DictionaryWordText = string.Empty;
+        DictionaryPartOfSpeechText = string.Empty;
+        DictionaryDefinitionText = string.Empty;
+        DictionaryExampleText = string.Empty;
+        DictionaryStatusText = string.Empty;
+        IsDictionaryStatusVisible = false;
+        IsDictionaryCardVisible = false;
+        IsDictionaryToggleVisible = IsDictionaryPanelVisible;
+    }
+
+    private void ClearDictionaryPanel()
+    {
+        _dictionaryCurrentWord = string.Empty;
+        DictionarySolutionText = string.Empty;
+        HideCurrentDefinition();
+        IsDictionaryPanelVisible = false;
+        IsDictionaryToggleVisible = false;
     }
 
     private void RefreshStreakLine()

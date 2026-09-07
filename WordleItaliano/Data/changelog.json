@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.5.9",
+    "title": "Novita' della versione 1.5.9",
+    "items": [
+      "Aggiunto il Dizionario: al termine di Giornaliera e Bonus puoi ora scoprire il significato della parola giocata.",
+      "Supportati piu' significati per le parole con diverse accezioni.",
+      "Migliorata la gestione di plurali, femminili e forme verbali.",
+      "Il dizionario funziona completamente offline.",
+      "Miglioramenti e correzioni minori."
+    ]
+  },
+  {
     "version": "1.5.8",
     "title": "Novita' della versione 1.5.8",
     "items": [

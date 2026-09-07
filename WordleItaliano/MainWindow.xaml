@@ -158,6 +158,76 @@
                            Margin="0,6,0,0"
                            Visibility="{Binding IsScoreLineVisible, Converter={StaticResource BoolVisibility}}"
                            Foreground="#538D4E" />
+                <StackPanel Margin="0,10,0,0"
+                            Width="420"
+                            MaxWidth="420"
+                            Visibility="{Binding IsDictionaryPanelVisible, Converter={StaticResource BoolVisibility}}">
+                    <TextBlock Text="{Binding DictionarySolutionText}"
+                               TextAlignment="Center"
+                               FontSize="13"
+                               FontWeight="SemiBold"
+                               TextWrapping="Wrap"
+                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                    <Button Content="Scopri il significato"
+                            Command="{Binding ShowDefinitionCommand}"
+                            Visibility="{Binding IsDictionaryToggleVisible, Converter={StaticResource BoolVisibility}}"
+                            Style="{StaticResource TopButtonStyle}"
+                            Padding="9,6"
+                            Margin="0,6,0,0"
+                            HorizontalAlignment="Center" />
+                    <Border Margin="0,8,0,0"
+                            Padding="12,10"
+                            CornerRadius="8"
+                            BorderThickness="1"
+                            Visibility="{Binding IsDictionaryCardVisible, Converter={StaticResource BoolVisibility}}"
+                            Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                            BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}">
+                        <StackPanel>
+                            <DockPanel LastChildFill="True">
+                                <Button DockPanel.Dock="Right"
+                                        Content="Nascondi"
+                                        Command="{Binding HideDefinitionCommand}"
+                                        Style="{StaticResource TopButtonStyle}"
+                                        Padding="8,5"
+                                        Margin="8,0,0,0"
+                                        BorderThickness="0"
+                                        Background="Transparent"
+                                        Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}"
+                                        Opacity="0.76" />
+                                <StackPanel>
+                                    <TextBlock Text="{Binding DictionaryWordText}"
+                                               FontSize="15"
+                                               FontWeight="Black"
+                                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                    <TextBlock Text="{Binding DictionaryPartOfSpeechText}"
+                                               FontSize="12"
+                                               FontWeight="SemiBold"
+                                               Margin="0,2,0,0"
+                                               TextWrapping="Wrap"
+                                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                </StackPanel>
+                            </DockPanel>
+                            <TextBlock Text="{Binding DictionaryDefinitionText}"
+                                       FontSize="13"
+                                       Margin="0,8,0,0"
+                                       TextWrapping="Wrap"
+                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                            <TextBlock Text="{Binding DictionaryExampleText}"
+                                       FontSize="12"
+                                       FontStyle="Italic"
+                                       Margin="0,8,0,0"
+                                       TextWrapping="Wrap"
+                                       Visibility="{Binding IsDictionaryExampleVisible, Converter={StaticResource BoolVisibility}}"
+                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                            <TextBlock Text="{Binding DictionaryStatusText}"
+                                       FontSize="13"
+                                       Margin="0,8,0,0"
+                                       TextWrapping="Wrap"
+                                       Visibility="{Binding IsDictionaryStatusVisible, Converter={StaticResource BoolVisibility}}"
+                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
                 <WrapPanel HorizontalAlignment="Center" Margin="0,10,0,0">
                     <Button Content="Copia risultato"
                             Command="{Binding CopyCurrentResultCommand}"

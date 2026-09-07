@@ -4,6 +4,7 @@
 - `validWords6.json` / `validWords7.json`: parole accettate per il bonus random.
 - `dailyWords.json`: parole di 5 lettere usabili come soluzioni giornaliere.
 - `bonusWords5.json`, `bonusWords6.json`, `bonusWords7.json`: soluzioni del bonus random.
+- `definitions.json`: definizioni locali mostrate a fine partita per Giornaliera e Bonus.
 
 Le soluzioni sono piu' selettive dei tentativi: evitano nomi propri, parole segnalate come brutte, forme molto rare e parole con frequenza italiana troppo bassa. I tentativi restano piu' permissivi per non bloccare parole valide durante la partita.
 
@@ -17,3 +18,5 @@ Fonti principali:
   per ampliare le parole accettate e le coniugazioni comuni.
 
 La rigenerazione e' gestita da `tools/generate_word_lists.py`. Se trovi una parola da escludere, aggiungila alla `BLOCKLIST` dello script e rigenera i JSON.
+
+Le definizioni sono generate con `tools/generate_definitions.py` partendo dal dump JSONL gzip di Kaikki/Wikizionario. Il generatore risolve le forme flesse verso il lemma quando il dump espone `form_of`, quando il rimando e' presente nella glossa o quando la forma e' elencata nella voce del lemma. Licenze e attribuzioni sono riportate in `THIRD_PARTY_LICENSES.md`.
