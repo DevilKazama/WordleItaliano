@@ -30,4 +30,25 @@ public sealed class ChangelogService
             return null;
         }
     }
+
+    public IReadOnlyList<ChangelogEntry> GetLatestEntries(int maxEntries = 8)
+    {
+        if (!File.Exists(_path))
+        {
+            return [];
+        }
+
+        try
+        {
+            var entries = JsonSerializer.Deserialize<List<ChangelogEntry>>(File.ReadAllText(_path)) ?? [];
+            return entries
+                .Where(entry => !string.IsNullOrWhiteSpace(entry.Version))
+                .Take(maxEntries)
+                .ToArray();
+        }
+        catch
+        {
+            return [];
+        }
+    }
 }

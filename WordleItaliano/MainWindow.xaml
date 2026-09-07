@@ -663,10 +663,16 @@
                                                Margin="0,4,0,0"
                                                Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
                                 </StackPanel>
-                                <Button Grid.Column="1"
-                                        Content="Controlla"
-                                        Command="{Binding CheckUpdatesCommand}"
-                                        Style="{StaticResource TopButtonStyle}" />
+                                <StackPanel Grid.Column="1"
+                                            Orientation="Horizontal">
+                                    <Button Content="Changelog"
+                                            Command="{Binding ShowChangelogCommand}"
+                                            Style="{StaticResource TopButtonStyle}" />
+                                    <Button Content="Controlla"
+                                            Command="{Binding CheckUpdatesCommand}"
+                                            Margin="8,4,4,4"
+                                            Style="{StaticResource TopButtonStyle}" />
+                                </StackPanel>
                             </Grid>
                             <TextBlock Text="{Binding UpdateStatusText}"
                                        Margin="0,12,0,0"
@@ -684,6 +690,7 @@
               Visibility="{Binding IsUpdateDialogVisible, Converter={StaticResource BoolVisibility}}">
             <Border Width="520"
                     MaxWidth="620"
+                    MaxHeight="620"
                     Padding="24"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
@@ -784,11 +791,14 @@
                             BorderThickness="1"
                             BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
                             Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}">
-                        <TextBlock Text="{Binding ChangelogText}"
-                                   FontSize="14"
-                                   LineHeight="24"
-                                   TextWrapping="Wrap"
-                                   Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                        <ScrollViewer MaxHeight="420"
+                                      VerticalScrollBarVisibility="Auto">
+                            <TextBlock Text="{Binding ChangelogText}"
+                                       FontSize="14"
+                                       LineHeight="24"
+                                       TextWrapping="Wrap"
+                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                        </ScrollViewer>
                     </Border>
 
                     <Button Content="Ok"

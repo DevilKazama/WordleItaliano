@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.4",
+    "title": "Novita' della versione 1.5.4",
+    "items": [
+      "Dopo un aggiornamento l'app mostra una finestra con le novita' principali.",
+      "Nelle impostazioni c'e' il nuovo pulsante Changelog per rileggere gli ultimi aggiornamenti quando vuoi.",
+      "Le note sono scritte in modo semplice, per capire subito cosa cambia nel gioco."
+    ]
+  },
+  {
     "version": "1.5.3",
     "title": "Novita' della versione 1.5.3",
     "items": [

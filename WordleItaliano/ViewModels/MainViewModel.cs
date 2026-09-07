@@ -229,6 +229,7 @@ public sealed class MainViewModel : ObservableObject
         InstallUpdateCommand = new RelayCommand(_ => _ = InstallPendingUpdateAsync());
         DismissUpdateCommand = new RelayCommand(_ => DismissUpdateDialog());
         SaveProfileCommand = new RelayCommand(_ => SaveProfileName());
+        ShowChangelogCommand = new RelayCommand(_ => ShowFullChangelog());
         DismissChangelogCommand = new RelayCommand(_ => DismissChangelog());
 
         LoadOrStartGame();
@@ -293,6 +294,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand InstallUpdateCommand { get; }
     public ICommand DismissUpdateCommand { get; }
     public ICommand SaveProfileCommand { get; }
+    public ICommand ShowChangelogCommand { get; }
     public ICommand DismissChangelogCommand { get; }
 
     public string Message
@@ -2421,6 +2423,34 @@ public sealed class MainViewModel : ObservableObject
             ? $"Novita' della versione {entry.Version}"
             : entry.Title;
         ChangelogText = string.Join(Environment.NewLine, entry.Items.Select(item => $"- {item}"));
+        IsChangelogVisible = true;
+    }
+
+    private void ShowFullChangelog()
+    {
+        var entries = _changelogService.GetLatestEntries();
+        if (entries.Count == 0)
+        {
+            ShowToast("Changelog non disponibile.");
+            return;
+        }
+
+        CloseOverlays();
+        IsSplashVisible = false;
+        IsProfileDialogVisible = false;
+        ChangelogTitle = "Ultimi aggiornamenti";
+        ChangelogText = string.Join(
+            $"{Environment.NewLine}{Environment.NewLine}",
+            entries.Select(entry =>
+            {
+                var title = string.IsNullOrWhiteSpace(entry.Title)
+                    ? $"Versione {entry.Version}"
+                    : entry.Title;
+                var items = entry.Items.Count == 0
+                    ? "Nessuna nota disponibile."
+                    : string.Join(Environment.NewLine, entry.Items.Select(item => $"- {item}"));
+                return $"{title}{Environment.NewLine}{items}";
+            }));
         IsChangelogVisible = true;
     }
 
