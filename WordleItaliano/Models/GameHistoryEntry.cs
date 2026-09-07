@@ -11,6 +11,11 @@ public sealed class GameHistoryEntry
     public int Attempts { get; set; }
     public int Points { get; set; }
     public int? ScoreEarned { get; set; }
+    public int? BaseScore { get; set; }
+    public int? DayBaseScore { get; set; }
+    public int? DayFinalScore { get; set; }
+    public int? StreakAtDate { get; set; }
+    public int? StreakMultiplierPercent { get; set; }
     public int? DurationSeconds { get; set; }
     public List<string> Guesses { get; set; } = [];
 }

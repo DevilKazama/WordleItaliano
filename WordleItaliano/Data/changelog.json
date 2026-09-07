@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.5.7",
+    "title": "Novita' della versione 1.5.7",
+    "items": [
+      "La streak ora dipende solo dalla Giornaliera: il Bonus non la interrompe mai.",
+      "Se salti un giorno o perdi la Giornaliera, la streak riparte dalla prossima vittoria.",
+      "Aggiunto un moltiplicatore punti legato alla streak: fino a x1.3 sui punti ottenuti nella giornata.",
+      "Durante Giornaliera e Bonus vedi subito streak e moltiplicatore del giorno.",
+      "Il risultato copiato mostra streak, moltiplicatore e punti finali della giornata."
+    ]
+  },
+  {
     "version": "1.5.6",
     "title": "Novita' della versione 1.5.6",
     "items": [

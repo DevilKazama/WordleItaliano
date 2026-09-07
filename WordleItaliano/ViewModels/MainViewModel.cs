@@ -92,6 +92,8 @@ public sealed class MainViewModel : ObservableObject
     private string _wrappedMonthlyScoresText = string.Empty;
     private string _monthlyRecapTitle = string.Empty;
     private string _scoreLineText = string.Empty;
+    private string _streakLineText = string.Empty;
+    private bool _isStreakLineVisible;
     private string _modeBadgeText = "Giornaliera";
     private string _modeBadgeDetail = "Sfida quotidiana";
     private string _updateStatusText = string.Empty;
@@ -533,6 +535,18 @@ public sealed class MainViewModel : ObservableObject
         set => SetProperty(ref _isScoreLineVisible, value);
     }
 
+    public string StreakLineText
+    {
+        get => _streakLineText;
+        set => SetProperty(ref _streakLineText, value);
+    }
+
+    public bool IsStreakLineVisible
+    {
+        get => _isStreakLineVisible;
+        set => SetProperty(ref _isStreakLineVisible, value);
+    }
+
     public string ToastMessage
     {
         get => _toastMessage;
@@ -810,7 +824,7 @@ public sealed class MainViewModel : ObservableObject
             Message = _isInfiniteActive
                 ? "Infinita vinta. Puoi farne un'altra."
                 : _isBonusActive
-                ? "Bonus vinto: +1 punto."
+                ? "Bonus vinto: punti aggiornati."
                 : _currentRow switch
                 {
                     0 => "Geniale.",
@@ -1447,7 +1461,22 @@ public sealed class MainViewModel : ObservableObject
         IsBonusViewButtonVisible = !_isBonusActive && _bonusGuesses.Count > 0;
         IsDailyViewButtonVisible = _isBonusActive || _isInfiniteActive;
         IsNewInfiniteButtonVisible = _isInfiniteActive && _infiniteStatus != GameStatus.Playing;
+        RefreshStreakLine();
         RefreshScoreLine();
+    }
+
+    private void RefreshStreakLine()
+    {
+        if (_isInfiniteActive)
+        {
+            StreakLineText = string.Empty;
+            IsStreakLineVisible = false;
+            return;
+        }
+
+        var streak = GetVisibleStreak();
+        StreakLineText = $"Streak: {streak} {FormatDayWord(streak)} · punti di oggi x{FormatMultiplier(GetStreakMultiplierPercent(streak))}";
+        IsStreakLineVisible = true;
     }
 
     private void RefreshScoreLine()
@@ -1461,7 +1490,18 @@ public sealed class MainViewModel : ObservableObject
         }
 
         var monthLabel = GetShareMonthLabel(entry);
-        ScoreLineText = $"+{GetEntryScore(entry)} pt · {monthLabel}: {GetShareMonthScore(entry)} pt";
+        if (entry.StreakMultiplierPercent is null || entry.StreakAtDate is null)
+        {
+            ScoreLineText = $"+{GetEntryScore(entry)} pt · {monthLabel}: {GetShareMonthScore(entry)} pt";
+            IsScoreLineVisible = true;
+            return;
+        }
+
+        var snapshot = GetDayScoreSnapshot(TryGetHistoryDate(entry.Date) ?? DateOnly.FromDateTime(DateTime.Today), entry);
+        var todayScore = snapshot.BaseScore == snapshot.FinalScore
+            ? $"{snapshot.FinalScore} pt"
+            : $"{snapshot.BaseScore} -> {snapshot.FinalScore} pt";
+        ScoreLineText = $"Punti di oggi: {todayScore} · {monthLabel}: {GetShareMonthScore(entry)} pt";
         IsScoreLineVisible = true;
     }
 
@@ -1587,12 +1627,14 @@ public sealed class MainViewModel : ObservableObject
         Statistics.LastPlayedDate = _todayKey;
         if (won)
         {
-            var score = CalculateScore(5, attempts);
-            Statistics.Won++;
-            Statistics.Points += score;
-            Statistics.CurrentStreak = previousWinDate == today.AddDays(-1)
+            var streak = previousWinDate == today.AddDays(-1)
                 ? Statistics.CurrentStreak + 1
                 : 1;
+            var baseScore = CalculateScore(5, attempts);
+            var score = ApplyStreakMultiplier(baseScore, streak);
+            Statistics.Won++;
+            Statistics.Points += score;
+            Statistics.CurrentStreak = streak;
             Statistics.BestStreak = Math.Max(Statistics.BestStreak, Statistics.CurrentStreak);
             Statistics.LastWinDate = _todayKey;
             Statistics.WinDistribution[attempts - 1]++;
@@ -1612,10 +1654,17 @@ public sealed class MainViewModel : ObservableObject
 
     private void RecordBonus(bool won, int attempts)
     {
+        var today = DateOnly.Parse(_todayKey);
+        var previousDayFinalScore = GetDayScoreSnapshot(today, null).FinalScore;
+        var entry = CreateBonusHistoryEntry(won, attempts);
+        var dayFinalScore = entry.DayFinalScore ?? GetEntryScore(entry);
+        var score = Math.Max(0, dayFinalScore - previousDayFinalScore);
+        entry.ScoreEarned = score;
+        entry.Points = score;
+
         Statistics.BonusPlayed++;
         if (won)
         {
-            var score = CalculateScore(_bonusWordLength, attempts);
             Statistics.BonusWon++;
             Statistics.Points += score;
             if (_dailyStatus == GameStatus.Won)
@@ -1624,7 +1673,7 @@ public sealed class MainViewModel : ObservableObject
             }
         }
 
-        UpsertHistory(CreateBonusHistoryEntry(won, attempts));
+        UpsertHistory(entry);
         _storage.SaveStatistics(Statistics);
         RefreshStatisticsView();
         RefreshHistoryView();
@@ -1650,6 +1699,10 @@ public sealed class MainViewModel : ObservableObject
 
     private GameHistoryEntry CreateDailyHistoryEntry(bool won, int attempts)
     {
+        var baseScore = CalculateScore(5, won ? attempts : 0);
+        var streak = GetDailyStreakForDate(_todayKey, won);
+        var finalScore = ApplyStreakMultiplier(baseScore, streak);
+
         return new GameHistoryEntry
         {
             Date = _todayKey,
@@ -1659,8 +1712,13 @@ public sealed class MainViewModel : ObservableObject
             WordLength = 5,
             Won = won,
             Attempts = won ? attempts : 6,
-            Points = CalculateScore(5, won ? attempts : 0),
-            ScoreEarned = CalculateScore(5, won ? attempts : 0),
+            Points = finalScore,
+            ScoreEarned = finalScore,
+            BaseScore = baseScore,
+            DayBaseScore = baseScore,
+            DayFinalScore = finalScore,
+            StreakAtDate = streak,
+            StreakMultiplierPercent = GetStreakMultiplierPercent(streak),
             DurationSeconds = _dailyTimerStarted ? GetDailyElapsedSeconds() : null,
             Guesses = [.. _dailyGuesses]
         };
@@ -1668,7 +1726,7 @@ public sealed class MainViewModel : ObservableObject
 
     private GameHistoryEntry CreateBonusHistoryEntry(bool won, int attempts)
     {
-        return new GameHistoryEntry
+        var entry = new GameHistoryEntry
         {
             Date = _todayKey,
             Solution = _bonusSolution,
@@ -1677,11 +1735,23 @@ public sealed class MainViewModel : ObservableObject
             WordLength = _bonusWordLength,
             Won = won,
             Attempts = won ? attempts : 6,
-            Points = CalculateScore(_bonusWordLength, won ? attempts : 0),
-            ScoreEarned = CalculateScore(_bonusWordLength, won ? attempts : 0),
+            BaseScore = CalculateScore(_bonusWordLength, won ? attempts : 0),
+            StreakAtDate = GetDailyStreakForDate(_todayKey, _dailyStatus == GameStatus.Won),
+            StreakMultiplierPercent = GetStreakMultiplierPercent(GetDailyStreakForDate(_todayKey, _dailyStatus == GameStatus.Won)),
             DurationSeconds = _bonusTimerStarted ? GetBonusElapsedSeconds() : null,
             Guesses = [.. _bonusGuesses]
         };
+        var today = DateOnly.Parse(_todayKey);
+        var previousSnapshot = GetDayScoreSnapshot(today, entry, includeCurrentEntry: false);
+        var currentSnapshot = GetDayScoreSnapshot(today, entry);
+        var score = Math.Max(0, currentSnapshot.FinalScore - previousSnapshot.FinalScore);
+        entry.Points = score;
+        entry.ScoreEarned = score;
+        entry.DayBaseScore = currentSnapshot.BaseScore;
+        entry.DayFinalScore = currentSnapshot.FinalScore;
+        entry.StreakAtDate = currentSnapshot.Streak;
+        entry.StreakMultiplierPercent = currentSnapshot.MultiplierPercent;
+        return entry;
     }
 
     private GameHistoryEntry CreateInfiniteHistoryEntry()
@@ -2686,9 +2756,24 @@ public sealed class MainViewModel : ObservableObject
                    string.Join(Environment.NewLine, rows);
         }
 
+        if (entry.StreakMultiplierPercent is null || entry.StreakAtDate is null)
+        {
+            return $"{header}{Environment.NewLine}" +
+                   $"{resultLine} · +{GetEntryScore(entry)} pt{Environment.NewLine}" +
+                   $"{GetShareMonthLabel(entry)} · {GetShareMonthScore(entry)} pt{Environment.NewLine}{Environment.NewLine}" +
+                   string.Join(Environment.NewLine, rows);
+        }
+
+        var snapshot = GetDayScoreSnapshot(TryGetHistoryDate(entry.Date) ?? DateOnly.FromDateTime(DateTime.Today), entry);
+        var dayScore = snapshot.BaseScore == snapshot.FinalScore
+            ? $"{snapshot.FinalScore}"
+            : $"{snapshot.BaseScore} -> {snapshot.FinalScore}";
+
         return $"{header}{Environment.NewLine}" +
-               $"{resultLine} · +{GetEntryScore(entry)} pt{Environment.NewLine}" +
-               $"{GetShareMonthLabel(entry)} · {GetShareMonthScore(entry)} pt{Environment.NewLine}{Environment.NewLine}" +
+               $"{resultLine}{Environment.NewLine}" +
+               $"Streak: {snapshot.Streak} {FormatDayWord(snapshot.Streak)} · x{FormatMultiplier(snapshot.MultiplierPercent)}{Environment.NewLine}" +
+               $"Punti di oggi: {dayScore}{Environment.NewLine}" +
+               $"{GetShareMonthLabel(entry)}: {GetShareMonthScore(entry)} punti{Environment.NewLine}{Environment.NewLine}" +
                string.Join(Environment.NewLine, rows);
     }
 
@@ -2700,6 +2785,127 @@ public sealed class MainViewModel : ObservableObject
         }
 
         return wordLength * (7 - attempts);
+    }
+
+    private static int GetStreakMultiplierPercent(int streak)
+    {
+        return streak switch
+        {
+            <= 1 => 100,
+            2 => 110,
+            3 => 120,
+            _ => 130
+        };
+    }
+
+    private static int ApplyStreakMultiplier(int baseScore, int streak)
+    {
+        var multiplierPercent = GetStreakMultiplierPercent(streak);
+        return (int)Math.Round(baseScore * multiplierPercent / 100.0, MidpointRounding.AwayFromZero);
+    }
+
+    private static string FormatMultiplier(int multiplierPercent)
+    {
+        return (multiplierPercent / 100.0).ToString("0.0", CultureInfo.InvariantCulture);
+    }
+
+    private static string FormatDayWord(int days)
+    {
+        return days == 1 ? "giorno" : "giorni";
+    }
+
+    private int GetVisibleStreak()
+    {
+        if (_dailyStatus == GameStatus.Won)
+        {
+            return GetDailyStreakForDate(_todayKey, true);
+        }
+
+        if (_dailyStatus == GameStatus.Lost)
+        {
+            return 0;
+        }
+
+        var today = DateOnly.Parse(_todayKey);
+        var previousWinDate = DateOnly.TryParse(Statistics.LastWinDate, out var parsedWinDate)
+            ? parsedWinDate
+            : (DateOnly?)null;
+        return previousWinDate == today.AddDays(-1)
+            ? Math.Max(0, Statistics.CurrentStreak) + 1
+            : 1;
+    }
+
+    private int GetDailyStreakForDate(string dateKey, bool won)
+    {
+        if (!won || !DateOnly.TryParse(dateKey, out var date))
+        {
+            return 0;
+        }
+
+        if (Statistics.LastWinDate == dateKey && Statistics.CurrentStreak > 0)
+        {
+            return Statistics.CurrentStreak;
+        }
+
+        var savedEntry = Statistics.History
+            .LastOrDefault(entry => !entry.IsBonus && !entry.IsInfinite && entry.Date == dateKey && entry.Won);
+        if (savedEntry?.StreakAtDate is > 0)
+        {
+            return savedEntry.StreakAtDate.Value;
+        }
+
+        var previousDateKey = DailyWordService.FormatDateKey(date.AddDays(-1));
+        var previousEntry = Statistics.History
+            .LastOrDefault(entry => !entry.IsBonus && !entry.IsInfinite && entry.Date == previousDateKey && entry.Won);
+        if (previousEntry is null)
+        {
+            return 1;
+        }
+
+        var previousStreak = previousEntry.StreakAtDate is > 0
+            ? previousEntry.StreakAtDate.Value
+            : GetDailyStreakForDate(previousEntry.Date, true);
+        return previousStreak + 1;
+    }
+
+    private DayScoreSnapshot GetDayScoreSnapshot(
+        DateOnly date,
+        GameHistoryEntry? currentEntry,
+        bool includeCurrentEntry = true)
+    {
+        var dateKey = DailyWordService.FormatDateKey(date);
+        var entries = Statistics.History
+            .Where(entry => IsCompetitiveEntry(entry) && TryGetHistoryDate(entry.Date) == date)
+            .ToList();
+
+        if (currentEntry is not null)
+        {
+            entries.RemoveAll(entry => entry.IsBonus == currentEntry.IsBonus && entry.IsInfinite == currentEntry.IsInfinite);
+            if (includeCurrentEntry)
+            {
+                entries.Add(currentEntry);
+            }
+        }
+
+        var dailyEntry = entries.LastOrDefault(entry => !entry.IsBonus && !entry.IsInfinite);
+        var streak = dailyEntry?.StreakAtDate is > 0
+            ? dailyEntry.StreakAtDate.Value
+            : GetDailyStreakForDate(dateKey, dailyEntry?.Won == true);
+        var multiplierPercent = GetStreakMultiplierPercent(streak);
+        var baseScore = entries.Sum(GetEntryBaseScore);
+        var finalScore = ApplyStreakMultiplier(baseScore, streak);
+
+        return new DayScoreSnapshot(baseScore, finalScore, streak, multiplierPercent);
+    }
+
+    private static int GetEntryBaseScore(GameHistoryEntry entry)
+    {
+        if (!IsCompetitiveEntry(entry) || !entry.Won)
+        {
+            return 0;
+        }
+
+        return entry.BaseScore ?? CalculateScore(entry.WordLength, entry.Attempts);
     }
 
     private static int GetEntryScore(GameHistoryEntry entry)
@@ -2760,6 +2966,8 @@ public sealed class MainViewModel : ObservableObject
         var date = TryGetHistoryDate(entry.Date) ?? DateOnly.FromDateTime(DateTime.Today);
         return culture.TextInfo.ToTitleCase(date.ToString("MMMM", culture));
     }
+
+    private sealed record DayScoreSnapshot(int BaseScore, int FinalScore, int Streak, int MultiplierPercent);
 
     private static string BuildShareRow(string guess, string solution)
     {

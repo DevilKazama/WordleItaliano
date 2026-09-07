@@ -144,6 +144,13 @@
                            Margin="0,6,0,0"
                            Visibility="{Binding IsDailyTimerVisible, Converter={StaticResource BoolVisibility}}"
                            Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                <TextBlock Text="{Binding StreakLineText}"
+                           TextAlignment="Center"
+                           FontSize="13"
+                           FontWeight="SemiBold"
+                           Margin="0,6,0,0"
+                           Visibility="{Binding IsStreakLineVisible, Converter={StaticResource BoolVisibility}}"
+                           Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
                 <TextBlock Text="{Binding ScoreLineText}"
                            TextAlignment="Center"
                            FontSize="13"
@@ -542,7 +549,7 @@
                             BorderThickness="1"
                             BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
                             Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}">
-                        <TextBlock Text="Se vinci la giornaliera, si sblocca il bonus random da 5, 6 o 7 lettere per provare il secondo punto. Il bonus non interrompe la streak giornaliera."
+                        <TextBlock Text="Se vinci la giornaliera, si sblocca il bonus random da 5, 6 o 7 lettere per aumentare i punti del giorno. Il bonus non interrompe la streak giornaliera."
                                    FontSize="13"
                                    TextWrapping="Wrap"
                                    Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
