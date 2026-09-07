@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.5",
+    "title": "Novita' della versione 1.5.5",
+    "items": [
+      "Corretto il pulsante Changelog: ora mostra davvero le ultime novita'.",
+      "Corretto il popup dopo aggiornamento: alla prima apertura spiega cosa e' cambiato.",
+      "Le note delle versioni restano scritte in modo semplice, pensate per chi gioca."
+    ]
+  },
+  {
     "version": "1.5.4",
     "title": "Novita' della versione 1.5.4",
     "items": [

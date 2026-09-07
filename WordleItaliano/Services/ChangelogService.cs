@@ -6,6 +6,11 @@ namespace WordleItaliano.Services;
 
 public sealed class ChangelogService
 {
+    private static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly string _path;
 
     public ChangelogService()
@@ -22,7 +27,7 @@ public sealed class ChangelogService
 
         try
         {
-            var entries = JsonSerializer.Deserialize<List<ChangelogEntry>>(File.ReadAllText(_path));
+            var entries = JsonSerializer.Deserialize<List<ChangelogEntry>>(File.ReadAllText(_path), JsonOptions);
             return entries?.FirstOrDefault(entry => entry.Version == version);
         }
         catch
@@ -40,7 +45,7 @@ public sealed class ChangelogService
 
         try
         {
-            var entries = JsonSerializer.Deserialize<List<ChangelogEntry>>(File.ReadAllText(_path)) ?? [];
+            var entries = JsonSerializer.Deserialize<List<ChangelogEntry>>(File.ReadAllText(_path), JsonOptions) ?? [];
             return entries
                 .Where(entry => !string.IsNullOrWhiteSpace(entry.Version))
                 .Take(maxEntries)

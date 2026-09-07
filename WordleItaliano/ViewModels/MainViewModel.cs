@@ -2411,8 +2411,6 @@ public sealed class MainViewModel : ObservableObject
         var entry = _changelogService.GetEntry(currentVersion);
         if (entry is null)
         {
-            _userSettings.LastSeenChangelogVersion = currentVersion;
-            _storage.SaveUserSettings(_userSettings);
             return;
         }
 
