@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.5.12",
+    "title": "Risultato condiviso piu' chiaro",
+    "items": [
+      "Il copia risultato distingue meglio i punti della Giornaliera da quelli del Bonus.",
+      "Con il moltiplicatore streak, il risultato condiviso mostra i punti della singola partita invece del totale unico del giorno."
+    ]
+  },
+  {
     "version": "1.5.11",
     "title": "Colpo Perfetto",
     "items": [

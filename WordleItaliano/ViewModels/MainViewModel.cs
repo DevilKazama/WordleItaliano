@@ -3167,15 +3167,10 @@ public sealed class MainViewModel : ObservableObject
                    string.Join(Environment.NewLine, rows);
         }
 
-        var snapshot = GetDayScoreSnapshot(TryGetHistoryDate(entry.Date) ?? DateOnly.FromDateTime(DateTime.Today), entry);
-        var dayScore = snapshot.BaseScore == snapshot.FinalScore
-            ? $"{snapshot.FinalScore}"
-            : $"{snapshot.BaseScore} -> {snapshot.FinalScore}";
-
         return $"{header}{Environment.NewLine}" +
                $"{resultLine}{Environment.NewLine}" +
-               $"Streak: {snapshot.Streak} {FormatDayWord(snapshot.Streak)} · x{FormatMultiplier(snapshot.MultiplierPercent)}{Environment.NewLine}" +
-               $"Punti di oggi: {dayScore}{Environment.NewLine}" +
+               $"Streak: {entry.StreakAtDate} {FormatDayWord(entry.StreakAtDate.Value)} · x{FormatMultiplier(entry.StreakMultiplierPercent.Value)}{Environment.NewLine}" +
+               $"{GetEntryScoreLabel(entry)}: {FormatEntryScoreDetail(entry)}{Environment.NewLine}" +
                $"{GetShareMonthLabel(entry)}: {GetShareMonthScore(entry)} punti{Environment.NewLine}{Environment.NewLine}" +
                string.Join(Environment.NewLine, rows);
     }
@@ -3195,12 +3190,8 @@ public sealed class MainViewModel : ObservableObject
 
         if (entry.StreakMultiplierPercent is not null && entry.StreakAtDate is not null)
         {
-            var snapshot = GetDayScoreSnapshot(TryGetHistoryDate(entry.Date) ?? DateOnly.FromDateTime(DateTime.Today), entry);
-            var dayScore = snapshot.BaseScore == snapshot.FinalScore
-                ? $"{snapshot.FinalScore}"
-                : $"{snapshot.BaseScore} -> {snapshot.FinalScore}";
-            builder.AppendLine($"Streak: {snapshot.Streak} {FormatDayWord(snapshot.Streak)} · x{FormatMultiplier(snapshot.MultiplierPercent)}");
-            builder.AppendLine($"Punti di oggi: {dayScore}");
+            builder.AppendLine($"Streak: {entry.StreakAtDate} {FormatDayWord(entry.StreakAtDate.Value)} · x{FormatMultiplier(entry.StreakMultiplierPercent.Value)}");
+            builder.AppendLine($"{GetEntryScoreLabel(entry)}: {FormatEntryScoreDetail(entry)}");
         }
 
         builder.AppendLine();
@@ -3339,6 +3330,20 @@ public sealed class MainViewModel : ObservableObject
         }
 
         return entry.BaseScore ?? CalculateScore(entry.WordLength, entry.Attempts);
+    }
+
+    private static string GetEntryScoreLabel(GameHistoryEntry entry)
+    {
+        return entry.IsBonus ? "Punti bonus" : "Punti giornaliera";
+    }
+
+    private static string FormatEntryScoreDetail(GameHistoryEntry entry)
+    {
+        var baseScore = GetEntryBaseScore(entry);
+        var finalScore = GetEntryScore(entry);
+        return baseScore == finalScore
+            ? $"{finalScore}"
+            : $"{baseScore} -> {finalScore}";
     }
 
     private static int GetEntryScore(GameHistoryEntry entry)
