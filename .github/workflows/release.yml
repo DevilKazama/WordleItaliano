@@ -30,7 +30,24 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          $version = $env:GITHUB_REF_NAME.TrimStart("v")
+          $entries = Get-Content .\WordleItaliano\Data\changelog.json -Raw | ConvertFrom-Json
+          $entry = $entries | Where-Object { $_.version -eq $version } | Select-Object -First 1
+          $notesPath = Join-Path $env:RUNNER_TEMP "release-notes.md"
+
+          if ($entry) {
+            $lines = @()
+            $lines += "### $($entry.title)"
+            $lines += ""
+            foreach ($item in $entry.items) {
+              $lines += "- $item"
+            }
+            $lines | Set-Content -Path $notesPath -Encoding UTF8
+          } else {
+            "Nuova versione disponibile." | Set-Content -Path $notesPath -Encoding UTF8
+          }
+
           gh release create $env:GITHUB_REF_NAME `
             .\WordleItaliano\releases\* `
             --title "Wordle Italiano $env:GITHUB_REF_NAME" `
-            --notes "Aggiornamento Wordle Italiano $env:GITHUB_REF_NAME"
+            --notes-file $notesPath

@@ -954,6 +954,25 @@
                                Margin="0,0,0,14"
                                Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
 
+                    <Border Padding="12"
+                            Margin="0,0,0,14"
+                            CornerRadius="6"
+                            BorderThickness="1"
+                            Visibility="{Binding IsUpdateReleaseNotesVisible, Converter={StaticResource BoolVisibility}}"
+                            Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}"
+                            BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}">
+                        <StackPanel>
+                            <TextBlock Text="Novita'"
+                                       FontWeight="Bold"
+                                       Margin="0,0,0,8"
+                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                            <TextBlock Text="{Binding UpdateReleaseNotesText}"
+                                       TextWrapping="Wrap"
+                                       LineHeight="19"
+                                       Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                        </StackPanel>
+                    </Border>
+
                     <TextBlock Text="{Binding UpdateProgressText}"
                                Margin="0,0,0,10"
                                TextWrapping="Wrap"

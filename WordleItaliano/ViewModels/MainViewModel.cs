@@ -121,8 +121,10 @@ public sealed class MainViewModel : ObservableObject
     private string _updateStatusText = string.Empty;
     private string _updateDialogTitle = string.Empty;
     private string _updateDialogMessage = string.Empty;
+    private string _updateReleaseNotesText = string.Empty;
     private string _updateProgressText = string.Empty;
     private int _updateProgressValue;
+    private bool _isUpdateReleaseNotesVisible;
     private string _availableVersionText = string.Empty;
     private string _playerName = string.Empty;
     private string _profileNameDraft = string.Empty;
@@ -407,6 +409,12 @@ public sealed class MainViewModel : ObservableObject
         set => SetProperty(ref _updateDialogMessage, value);
     }
 
+    public string UpdateReleaseNotesText
+    {
+        get => _updateReleaseNotesText;
+        set => SetProperty(ref _updateReleaseNotesText, value);
+    }
+
     public string UpdateProgressText
     {
         get => _updateProgressText;
@@ -417,6 +425,12 @@ public sealed class MainViewModel : ObservableObject
     {
         get => _updateProgressValue;
         set => SetProperty(ref _updateProgressValue, value);
+    }
+
+    public bool IsUpdateReleaseNotesVisible
+    {
+        get => _isUpdateReleaseNotesVisible;
+        set => SetProperty(ref _isUpdateReleaseNotesVisible, value);
     }
 
     public string AvailableVersionText
@@ -3000,7 +3014,7 @@ public sealed class MainViewModel : ObservableObject
         var result = await _updateService.CheckForUpdatesAsync();
         if (result.Status == AppUpdateCheckStatus.Available && result.Update is not null)
         {
-            ShowUpdateDialog(result.Update);
+            await ShowUpdateDialogAsync(result.Update);
         }
     }
 
@@ -3022,7 +3036,7 @@ public sealed class MainViewModel : ObservableObject
         {
             case AppUpdateCheckStatus.Available when result.Update is not null:
                 UpdateStatusText = "Aggiornamento disponibile.";
-                ShowUpdateDialog(result.Update);
+                await ShowUpdateDialogAsync(result.Update);
                 break;
             case AppUpdateCheckStatus.NoUpdates:
                 UpdateStatusText = "Hai gia' l'ultima versione.";
@@ -3039,7 +3053,7 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    private void ShowUpdateDialog(UpdateInfo update)
+    private async Task ShowUpdateDialogAsync(UpdateInfo update)
     {
         _pendingUpdate = update;
         _updatePromptShownThisSession = true;
@@ -3048,11 +3062,20 @@ public sealed class MainViewModel : ObservableObject
         IsProfileDialogVisible = false;
         UpdateDialogTitle = "Aggiornamento disponibile";
         AvailableVersionText = $"Nuova versione {update.TargetFullRelease.Version}";
-        UpdateDialogMessage = "Puoi aggiornare ora e l'app si riaprira' automaticamente. Storico, punti e impostazioni restano nella cartella dati locale.";
+        UpdateDialogMessage = "Ci sono novita' pronte. Puoi aggiornare ora: al termine l'app si riaprira' da sola.";
+        UpdateReleaseNotesText = string.Empty;
+        IsUpdateReleaseNotesVisible = false;
         UpdateProgressText = string.Empty;
         UpdateProgressValue = 0;
         IsUpdateBusy = false;
         IsUpdateDialogVisible = true;
+
+        var releaseNotes = await _updateService.GetReleaseNotesAsync(update.TargetFullRelease.Version.ToString());
+        if (!string.IsNullOrWhiteSpace(releaseNotes) && IsUpdateDialogVisible && ReferenceEquals(_pendingUpdate, update))
+        {
+            UpdateReleaseNotesText = releaseNotes;
+            IsUpdateReleaseNotesVisible = true;
+        }
     }
 
     private async Task InstallPendingUpdateAsync()
@@ -3081,6 +3104,8 @@ public sealed class MainViewModel : ObservableObject
             UpdateProgressText = string.Empty;
             UpdateProgressValue = 0;
             UpdateDialogMessage = $"Aggiornamento non riuscito: {result.ErrorMessage ?? "errore sconosciuto"}";
+            UpdateReleaseNotesText = string.Empty;
+            IsUpdateReleaseNotesVisible = false;
         }
     }
 
@@ -3090,6 +3115,8 @@ public sealed class MainViewModel : ObservableObject
         IsUpdateBusy = false;
         UpdateProgressText = string.Empty;
         UpdateProgressValue = 0;
+        UpdateReleaseNotesText = string.Empty;
+        IsUpdateReleaseNotesVisible = false;
         if (string.IsNullOrWhiteSpace(PlayerName))
         {
             IsProfileDialogVisible = true;

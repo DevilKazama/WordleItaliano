@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.14",
+    "title": "Aggiornamenti piu' chiari",
+    "items": [
+      "Il popup degli aggiornamenti usa un testo piu' naturale e meno tecnico.",
+      "Dai prossimi update potrai leggere le novita' direttamente prima di aggiornare.",
+      "Le note pubblicate su GitHub ora seguono il changelog dell'app."
+    ]
+  },
+  {
     "version": "1.5.13",
     "title": "Riepilogo mensile condivisibile",
     "items": [
