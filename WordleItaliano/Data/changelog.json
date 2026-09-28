@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.16",
+    "title": "Scelta del tema",
+    "items": [
+      "Ora puoi scegliere tra tema IBP scuro, tema IBP chiaro e tema Originale.",
+      "La scelta del tema resta salvata sul tuo PC.",
+      "Nei temi IBP le lettere non presenti nella parola usano il rosso RAL 3002."
+    ]
+  },
+  {
     "version": "1.5.15",
     "title": "Tema IBP",
     "items": [

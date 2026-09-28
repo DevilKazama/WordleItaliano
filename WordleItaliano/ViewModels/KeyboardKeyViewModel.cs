@@ -18,4 +18,9 @@ public sealed class KeyboardKeyViewModel : ObservableObject
         get => _state;
         set => SetProperty(ref _state, value);
     }
+
+    public void RefreshAppearance()
+    {
+        OnPropertyChanged(nameof(State));
+    }
 }

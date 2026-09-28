@@ -48,7 +48,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isInfiniteActive;
     private bool _isBonusUnlocked;
     private bool _isBonusPromptVisible;
-    private bool _isDarkTheme = true;
+    private string _themeMode = "IbpDark";
     private bool _isSplashVisible = true;
     private bool _isVirtualKeyboardVisible = true;
     private bool _isStatisticsVisible;
@@ -143,6 +143,7 @@ public sealed class MainViewModel : ObservableObject
         _updateService = new AppUpdateService(_settings.UpdateRepositoryUrl);
         _changelogService = new ChangelogService();
         _dictionaryService = new DictionaryService();
+        _themeMode = NormalizeThemeMode(_userSettings.ThemeMode);
         PlayerName = _userSettings.PlayerName.Trim();
         ProfileNameDraft = PlayerName;
         IsProfileDialogVisible = string.IsNullOrWhiteSpace(PlayerName);
@@ -223,7 +224,7 @@ public sealed class MainViewModel : ObservableObject
                 SelectTile(index);
             }
         });
-        ToggleThemeCommand = new RelayCommand(_ => IsDarkTheme = !IsDarkTheme);
+        SetThemeCommand = new RelayCommand(parameter => SetTheme(parameter?.ToString()));
         ToggleKeyboardCommand = new RelayCommand(_ => IsVirtualKeyboardVisible = !IsVirtualKeyboardVisible);
         HideSplashCommand = new RelayCommand(_ => IsSplashVisible = false);
         StartBonusCommand = new RelayCommand(_ => StartBonus());
@@ -300,7 +301,7 @@ public sealed class MainViewModel : ObservableObject
         : $"La sfida quotidiana di {PlayerName}";
     public ICommand KeyCommand { get; }
     public ICommand SelectTileCommand { get; }
-    public ICommand ToggleThemeCommand { get; }
+    public ICommand SetThemeCommand { get; }
     public ICommand ToggleKeyboardCommand { get; }
     public ICommand HideSplashCommand { get; }
     public ICommand StartBonusCommand { get; }
@@ -469,11 +470,23 @@ public sealed class MainViewModel : ObservableObject
         set => SetProperty(ref _isBonusPromptVisible, value);
     }
 
-    public bool IsDarkTheme
+    public string ThemeMode
     {
-        get => _isDarkTheme;
-        set => SetProperty(ref _isDarkTheme, value);
+        get => _themeMode;
+        set
+        {
+            var normalized = NormalizeThemeMode(value);
+            if (SetProperty(ref _themeMode, normalized))
+            {
+                OnThemeModeChanged();
+            }
+        }
     }
+
+    public bool IsDarkTheme => ThemeMode == "IbpDark";
+    public bool IsIbpDarkThemeActive => ThemeMode == "IbpDark";
+    public bool IsIbpLightThemeActive => ThemeMode == "IbpLight";
+    public bool IsOriginalThemeActive => ThemeMode == "Original";
 
     public bool IsSplashVisible
     {
@@ -2938,6 +2951,41 @@ public sealed class MainViewModel : ObservableObject
 
         _storage.SaveUserSettings(_userSettings);
         ShowToast("Nome salvato.");
+    }
+
+    private void SetTheme(string? themeMode)
+    {
+        ThemeMode = NormalizeThemeMode(themeMode);
+    }
+
+    private void OnThemeModeChanged()
+    {
+        _userSettings.ThemeMode = ThemeMode;
+        _storage.SaveUserSettings(_userSettings);
+        OnPropertyChanged(nameof(IsDarkTheme));
+        OnPropertyChanged(nameof(IsIbpDarkThemeActive));
+        OnPropertyChanged(nameof(IsIbpLightThemeActive));
+        OnPropertyChanged(nameof(IsOriginalThemeActive));
+
+        foreach (var tile in Tiles)
+        {
+            tile.RefreshAppearance();
+        }
+
+        foreach (var key in KeyboardRows.SelectMany(row => row))
+        {
+            key.RefreshAppearance();
+        }
+    }
+
+    private static string NormalizeThemeMode(string? themeMode)
+    {
+        return themeMode switch
+        {
+            "IbpLight" => "IbpLight",
+            "Original" => "Original",
+            _ => "IbpDark"
+        };
     }
 
     private void ShowChangelogIfNeeded(bool userSettingsExists)

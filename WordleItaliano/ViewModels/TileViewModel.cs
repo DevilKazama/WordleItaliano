@@ -39,4 +39,9 @@ public sealed class TileViewModel : ObservableObject
         get => _isSelected;
         set => SetProperty(ref _isSelected, value);
     }
+
+    public void RefreshAppearance()
+    {
+        OnPropertyChanged(nameof(State));
+    }
 }
