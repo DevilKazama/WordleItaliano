@@ -9,14 +9,13 @@ public sealed class TileStateToBrushConverter : IValueConverter
 {
     public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
     {
-        var dark = parameter?.ToString() == "Dark";
         return value switch
         {
-            TileState.Correct => new SolidColorBrush(Color.FromRgb(83, 141, 78)),
-            TileState.Present => new SolidColorBrush(Color.FromRgb(181, 159, 59)),
-            TileState.Absent => new SolidColorBrush(dark ? Color.FromRgb(58, 58, 60) : Color.FromRgb(120, 124, 126)),
-            TileState.Filled => new SolidColorBrush(dark ? Color.FromRgb(18, 18, 19) : Colors.White),
-            _ => new SolidColorBrush(dark ? Color.FromRgb(18, 18, 19) : Colors.White)
+            TileState.Correct => new SolidColorBrush(Color.FromRgb(0, 116, 122)),
+            TileState.Present => new SolidColorBrush(Color.FromRgb(194, 158, 61)),
+            TileState.Absent => new SolidColorBrush(Color.FromRgb(78, 86, 90)),
+            TileState.Filled => new SolidColorBrush(Color.FromRgb(43, 55, 60)),
+            _ => new SolidColorBrush(Color.FromRgb(54, 67, 72))
         };
     }
 

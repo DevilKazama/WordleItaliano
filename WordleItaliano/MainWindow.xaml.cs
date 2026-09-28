@@ -37,6 +37,12 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (e.Key == Key.Tab)
+        {
+            e.Handled = true;
+            return;
+        }
+
         if (DataContext is MainViewModel viewModel)
         {
             if (IsTextInputTarget(e.OriginalSource))

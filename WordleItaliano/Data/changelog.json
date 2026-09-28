@@ -1,5 +1,15 @@
 [
   {
+    "version": "1.5.15",
+    "title": "Tema IBP",
+    "items": [
+      "Wordle Italiano ora ha un tema scuro ispirato ai colori IBP.",
+      "Il logo IBP compare all'avvio e nell'intestazione del gioco.",
+      "Griglia, tastiera, popup e statistiche sono piu' coerenti con il nuovo stile.",
+      "Lo Storico e i pulsanti Copia sono piu' leggibili."
+    ]
+  },
+  {
     "version": "1.5.14",
     "title": "Aggiornamenti piu' chiari",
     "items": [

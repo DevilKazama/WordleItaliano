@@ -23,8 +23,9 @@
         <conv:BoolToVisibilityConverter x:Key="BoolVisibility" />
 
         <Style x:Key="TopButtonStyle" TargetType="Button">
-            <Setter Property="Padding" Value="10,8" />
-            <Setter Property="Margin" Value="4" />
+            <Setter Property="Padding" Value="7,6" />
+            <Setter Property="Margin" Value="3" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
@@ -35,8 +36,9 @@
         </Style>
 
         <Style x:Key="HistoryFilterButtonStyle" TargetType="Button">
-            <Setter Property="Padding" Value="10,8" />
+            <Setter Property="Padding" Value="9,7" />
             <Setter Property="Margin" Value="4" />
+            <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
@@ -46,16 +48,16 @@
             <Setter Property="BorderBrush" Value="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
-                    <Setter Property="Background" Value="#538D4E" />
+                    <Setter Property="Background" Value="#00747A" />
                     <Setter Property="Foreground" Value="White" />
-                    <Setter Property="BorderBrush" Value="#538D4E" />
+                    <Setter Property="BorderBrush" Value="#00747A" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
 
         <Style x:Key="KeyboardButtonStyle" TargetType="Button">
             <Setter Property="MinWidth" Value="34" />
-            <Setter Property="Height" Value="48" />
+            <Setter Property="Height" Value="44" />
             <Setter Property="Margin" Value="3" />
             <Setter Property="Padding" Value="8,0" />
             <Setter Property="FontSize" Value="14" />
@@ -65,6 +67,14 @@
             <Setter Property="Focusable" Value="False" />
             <Setter Property="Background" Value="{Binding State, Converter={StaticResource TileBrush}}" />
             <Setter Property="Foreground" Value="{Binding State, Converter={StaticResource TileForeground}}" />
+        </Style>
+
+        <Style x:Key="PrimaryCompactButtonStyle" TargetType="Button" BasedOn="{StaticResource TopButtonStyle}">
+            <Setter Property="Padding" Value="10,6" />
+            <Setter Property="Background" Value="#00747A" />
+            <Setter Property="Foreground" Value="White" />
+            <Setter Property="BorderBrush" Value="#009AA3" />
+            <Setter Property="BorderThickness" Value="1" />
         </Style>
 
         <Style x:Key="StatCardStyle" TargetType="Border">
@@ -89,14 +99,37 @@
         <Border Grid.Row="0"
                 BorderThickness="0,0,0,1"
                 BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}">
-            <DockPanel Margin="14,4">
-                <TextBlock DockPanel.Dock="Left"
-                           Text="Wordle Italiano"
-                           FontSize="22"
-                           FontWeight="Black"
-                           VerticalAlignment="Center"
-                           Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
-                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Grid Margin="14,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Grid.Column="0"
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center"
+                            Margin="0,0,12,0">
+                    <Border Width="90"
+                            Height="34"
+                            Padding="7,4"
+                            Margin="0,0,14,0"
+                            Background="White"
+                            BorderBrush="#C9D3D6"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <Image Source="/Assets/IBPLogo.png"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Border>
+                    <TextBlock Text="Wordle Italiano"
+                               FontSize="21"
+                               FontWeight="Black"
+                               VerticalAlignment="Center"
+                               MinWidth="156"
+                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                </StackPanel>
+                <WrapPanel Grid.Column="1"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center">
                     <Button Style="{StaticResource TopButtonStyle}" Content="?" Command="{Binding ShowHelpCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Grafico" Command="{Binding ShowStatisticsCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Storico" Command="{Binding ShowHistoryCommand}" />
@@ -104,21 +137,21 @@
                     <Button Style="{StaticResource TopButtonStyle}" Content="Tastiera" Command="{Binding ToggleKeyboardCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Infinita" Command="{Binding StartInfiniteCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Opzioni" Command="{Binding ShowSettingsCommand}" />
-                </StackPanel>
-            </DockPanel>
+                </WrapPanel>
+            </Grid>
         </Border>
 
         <ScrollViewer Grid.Row="1"
                       HorizontalScrollBarVisibility="Disabled"
                       VerticalScrollBarVisibility="Auto">
-            <StackPanel Margin="18,4,18,4">
+            <StackPanel Margin="18,12,18,6">
 
-            <StackPanel HorizontalAlignment="Center" Margin="0,0,0,2">
+            <StackPanel HorizontalAlignment="Center" Margin="0,0,0,8">
                 <Border HorizontalAlignment="Center"
                         Padding="10,2"
                         Margin="0,0,0,3"
                         CornerRadius="6"
-                        Background="#538D4E">
+                        Background="#00747A">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding ModeBadgeText}"
                                    FontSize="12"
@@ -156,7 +189,7 @@
                            FontWeight="SemiBold"
                            Margin="0,1,0,0"
                            Visibility="{Binding IsScoreLineVisible, Converter={StaticResource BoolVisibility}}"
-                           Foreground="#538D4E" />
+                           Foreground="#00747A" />
             </StackPanel>
 
             <Grid Grid.Row="1">
@@ -167,7 +200,7 @@
 
                 <Viewbox Grid.Row="0"
                          Stretch="Uniform"
-                         MaxHeight="320"
+                         MaxHeight="282"
                          HorizontalAlignment="Center"
                          VerticalAlignment="Top"
                          Margin="0,0,0,2">
@@ -192,7 +225,7 @@
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                     <Setter Property="BorderThickness" Value="4" />
-                                                    <Setter Property="BorderBrush" Value="#4A90E2" />
+                                                    <Setter Property="BorderBrush" Value="#009AA3" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -461,7 +494,7 @@
                                FontWeight="SemiBold"
                                TextAlignment="Center"
                                Margin="0,6,0,0"
-                               Foreground="#538D4E" />
+                               Foreground="#00747A" />
                     <TextBlock Text="Hai avuto culo. Approfittane."
                                FontSize="14"
                                TextAlignment="Center"
@@ -485,7 +518,7 @@
                                 MinWidth="112"
                                 Height="40"
                                 FontWeight="Bold"
-                                Background="#538D4E"
+                                Background="#00747A"
                                 Foreground="White"
                                 BorderThickness="0"
                                 Cursor="Hand"
@@ -590,7 +623,7 @@
                                                 Opacity="0.9" />
                                         <Border Width="{Binding BarWidth}"
                                                 HorizontalAlignment="Left"
-                                                Background="#538D4E"
+                                                Background="#00747A"
                                                 CornerRadius="5" />
                                         <TextBlock Text="{Binding Wins}"
                                                    Margin="10,0,0,0"
@@ -634,7 +667,7 @@
                                                 Opacity="0.9" />
                                         <Border Width="{Binding BarWidth}"
                                                 HorizontalAlignment="Left"
-                                                Background="#538D4E"
+                                                Background="#00747A"
                                                 CornerRadius="5" />
                                         <TextBlock Text="{Binding Wins}"
                                                    Margin="10,0,0,0"
@@ -687,7 +720,7 @@
                             Height="44"
                             FontSize="16"
                             FontWeight="Bold"
-                            Background="#538D4E"
+                            Background="#00747A"
                             Foreground="White"
                             BorderThickness="0"
                             Cursor="Hand"
@@ -734,7 +767,7 @@
                             <ColumnDefinition Width="32" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="22" Height="22" Background="#538D4E" />
+                        <Border Width="22" Height="22" Background="#00747A" />
                         <TextBlock Grid.Column="1"
                                    Text="Lettera giusta nella posizione giusta."
                                    VerticalAlignment="Center"
@@ -984,7 +1017,7 @@
                                  Value="{Binding UpdateProgressValue}"
                                  Margin="0,0,0,14"
                                  Visibility="{Binding IsUpdateBusy, Converter={StaticResource BoolVisibility}}"
-                                 Foreground="#538D4E"
+                                 Foreground="#00747A"
                                  Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}"
                                  BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
 
@@ -998,8 +1031,8 @@
                                 Padding="14,8"
                                 FontWeight="Bold"
                                 Foreground="White"
-                                Background="#538D4E"
-                                BorderBrush="#538D4E"
+                                Background="#00747A"
+                                BorderBrush="#00747A"
                                 BorderThickness="1"
                                 Cursor="Hand"
                                 Focusable="False" />
@@ -1057,9 +1090,9 @@
                             HorizontalAlignment="Right"
                             MinWidth="96"
                             FontWeight="Bold"
-                            Background="#538D4E"
+                            Background="#00747A"
                             Foreground="White"
-                            BorderBrush="#538D4E"
+                            BorderBrush="#00747A"
                             BorderThickness="1"
                             Cursor="Hand"
                             Focusable="False" />
@@ -1069,6 +1102,7 @@
 
         <Grid Grid.RowSpan="3"
               Background="#99000000"
+              Panel.ZIndex="45"
               Visibility="{Binding IsHistoryVisible, Converter={StaticResource BoolVisibility}}">
             <Border Width="500"
                     MaxWidth="560"
@@ -1076,7 +1110,7 @@
                     Padding="24"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                    Background="#263034"
                     BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
                     BorderThickness="1"
                     CornerRadius="8">
@@ -1193,7 +1227,7 @@
                                                 Padding="16"
                                                 BorderThickness="1"
                                                 BorderBrush="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
-                                                Background="{Binding DataContext.IsDarkTheme, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}"
+                                                Background="#202B2F"
                                                 CornerRadius="8">
                                             <Grid>
                                                 <Grid.RowDefinitions>
@@ -1227,7 +1261,7 @@
                                                             Command="{Binding DataContext.CopyHistoryResultCommand, RelativeSource={RelativeSource AncestorType=Window}}"
                                                             CommandParameter="{Binding ShareText}"
                                                             Margin="0,8,0,0"
-                                                            Style="{StaticResource TopButtonStyle}" />
+                                                            Style="{StaticResource PrimaryCompactButtonStyle}" />
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Row="1"
@@ -1237,11 +1271,11 @@
                                                     <TextBlock Text="{Binding Solution}"
                                                                FontSize="22"
                                                                FontWeight="Black"
-                                                               Foreground="#538D4E" />
+                                                               Foreground="#00747A" />
                                                     <Border Margin="12,3,0,3"
                                                             Padding="8,3"
                                                             CornerRadius="5"
-                                                            Background="#538D4E">
+                                                            Background="#00747A">
                                                         <TextBlock Text="{Binding ResultSummary}"
                                                                    FontSize="11"
                                                                    FontWeight="Bold"
@@ -1410,7 +1444,7 @@
                                                         CornerRadius="5" />
                                                 <Border Width="{Binding BarWidth}"
                                                         HorizontalAlignment="Left"
-                                                        Background="#538D4E"
+                                                        Background="#00747A"
                                                         CornerRadius="5" />
                                                 <TextBlock Text="{Binding Wins}"
                                                            Margin="10,0,0,0"
@@ -1563,9 +1597,9 @@
                                 Style="{StaticResource TopButtonStyle}" />
                         <Button Content="Resetta dati"
                                 Command="{Binding ConfirmResetCommand}"
-                                Background="#538D4E"
+                                Background="#00747A"
                                 Foreground="White"
-                                BorderBrush="#538D4E"
+                                BorderBrush="#00747A"
                                 Style="{StaticResource TopButtonStyle}" />
                     </WrapPanel>
                 </StackPanel>
@@ -1573,34 +1607,48 @@
         </Grid>
 
         <Grid Grid.RowSpan="3"
-              Background="#F8F8F8"
+              Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}"
               Visibility="{Binding IsSplashVisible, Converter={StaticResource BoolVisibility}}">
             <Border MaxWidth="420"
                     Padding="34"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Background="White"
-                    BorderBrush="#DDDDDD"
-                    BorderThickness="1">
+                    Background="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                    BorderBrush="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
+                    BorderThickness="1"
+                    CornerRadius="8">
                 <StackPanel>
+                    <Border Width="130"
+                            Height="50"
+                            Padding="10,6"
+                            Margin="0,0,0,22"
+                            HorizontalAlignment="Center"
+                            Background="White"
+                            BorderBrush="#C9D3D6"
+                            BorderThickness="1"
+                            CornerRadius="4">
+                        <Image Source="/Assets/IBPLogo.png"
+                               Stretch="Uniform"
+                               RenderOptions.BitmapScalingMode="HighQuality" />
+                    </Border>
                     <TextBlock Text="Wordle del Magazzino"
                                FontSize="34"
                                FontWeight="Black"
                                TextAlignment="Center"
-                               Foreground="#121213"
+                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}"
                                TextWrapping="Wrap" />
                     <TextBlock Text="{Binding SplashSubtitle}"
                                FontSize="18"
                                TextAlignment="Center"
                                Margin="0,12,0,28"
-                               Foreground="#3A3A3C"
+                               Foreground="{Binding IsDarkTheme, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}"
                                TextWrapping="Wrap" />
                     <Button Content="Gioca"
                             Command="{Binding HideSplashCommand}"
                             Height="46"
                             FontSize="16"
                             FontWeight="Bold"
-                            Background="#538D4E"
+                            Background="#00747A"
                             Foreground="White"
                             BorderThickness="0"
                             Cursor="Hand"
@@ -1646,7 +1694,7 @@
                             Margin="0,18,0,0"
                             FontSize="16"
                             FontWeight="Bold"
-                            Background="#538D4E"
+                            Background="#00747A"
                             Foreground="White"
                             BorderThickness="0"
                             Cursor="Hand"

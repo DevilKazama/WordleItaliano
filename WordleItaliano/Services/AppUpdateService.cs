@@ -24,6 +24,8 @@ public sealed class AppUpdateService
     public string CurrentVersionText =>
         _manager.CurrentVersion?.ToString() ?? GetAssemblyVersionText();
 
+    public string DisplayVersionText => TrimVersionMetadata(CurrentVersionText);
+
     public async Task<AppUpdateCheckResult> CheckForUpdatesAsync()
     {
         try
@@ -110,6 +112,12 @@ public sealed class AppUpdateService
         return string.IsNullOrWhiteSpace(informationalVersion)
             ? assembly.GetName().Version?.ToString(3) ?? "sviluppo"
             : informationalVersion;
+    }
+
+    private static string TrimVersionMetadata(string version)
+    {
+        var metadataIndex = version.IndexOf('+', StringComparison.Ordinal);
+        return metadataIndex > 0 ? version[..metadataIndex] : version;
     }
 
     private static bool TryGetGitHubRepository(string repositoryUrl, out string owner, out string repository)

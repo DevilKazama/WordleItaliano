@@ -11,10 +11,11 @@ public sealed class BoolToThemeBrushConverter : IValueConverter
         var isDark = value is true;
         return parameter?.ToString() switch
         {
-            "Background" => new SolidColorBrush(isDark ? Color.FromRgb(18, 18, 19) : Color.FromRgb(248, 248, 248)),
-            "Foreground" => new SolidColorBrush(isDark ? Color.FromRgb(245, 245, 245) : Color.FromRgb(28, 28, 30)),
-            "Panel" => new SolidColorBrush(isDark ? Color.FromRgb(28, 28, 30) : Colors.White),
-            "Border" => new SolidColorBrush(isDark ? Color.FromRgb(58, 58, 60) : Color.FromRgb(225, 225, 225)),
+            "Background" => new SolidColorBrush(isDark ? Color.FromRgb(30, 38, 42) : Color.FromRgb(243, 247, 248)),
+            "Foreground" => new SolidColorBrush(isDark ? Color.FromRgb(247, 250, 250) : Color.FromRgb(37, 48, 52)),
+            "Panel" => new SolidColorBrush(isDark ? Color.FromRgb(38, 48, 52) : Colors.White),
+            "Border" => new SolidColorBrush(isDark ? Color.FromRgb(76, 92, 98) : Color.FromRgb(201, 211, 214)),
+            "Muted" => new SolidColorBrush(isDark ? Color.FromRgb(198, 209, 212) : Color.FromRgb(91, 105, 110)),
             _ => Brushes.Transparent
         };
     }

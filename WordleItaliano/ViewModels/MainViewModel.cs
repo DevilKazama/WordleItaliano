@@ -48,7 +48,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isInfiniteActive;
     private bool _isBonusUnlocked;
     private bool _isBonusPromptVisible;
-    private bool _isDarkTheme;
+    private bool _isDarkTheme = true;
     private bool _isSplashVisible = true;
     private bool _isVirtualKeyboardVisible = true;
     private bool _isStatisticsVisible;
@@ -389,7 +389,7 @@ public sealed class MainViewModel : ObservableObject
         set => SetProperty(ref _changelogText, value);
     }
 
-    public string AppVersionText => $"Versione {_updateService.CurrentVersionText}";
+    public string AppVersionText => $"Versione {_updateService.DisplayVersionText}";
 
     public string UpdateStatusText
     {
@@ -1937,17 +1937,17 @@ public sealed class MainViewModel : ObservableObject
         BoardColumns = wordLength;
         var tileSize = wordLength switch
         {
-            5 => 96,
-            6 => 78,
-            _ => 68
+            5 => 78,
+            6 => 66,
+            _ => 58
         };
         BoardWidth = (tileSize + 8) * wordLength;
         BoardHeight = (tileSize + 8) * 6;
         TileFontSize = wordLength switch
         {
-            5 => 48,
-            6 => 40,
-            _ => 34
+            5 => 40,
+            6 => 34,
+            _ => 30
         };
         _currentRow = 0;
         _selectedColumn = 0;
