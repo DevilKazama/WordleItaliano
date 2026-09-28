@@ -238,6 +238,7 @@ public sealed class MainViewModel : ObservableObject
         ConfirmResetCommand = new RelayCommand(_ => ResetGameData());
         CancelResetCommand = new RelayCommand(_ => IsResetConfirmVisible = false);
         OpenMonthlyRecapWrappedCommand = new RelayCommand(_ => OpenMonthlyRecapWrapped());
+        CopyMonthlyRecapCommand = new RelayCommand(_ => CopyMonthlyRecap());
         SetHistoryFilterCommand = new RelayCommand(parameter =>
         {
             _historyFilter = parameter?.ToString() ?? "Tutte";
@@ -314,6 +315,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand ConfirmResetCommand { get; }
     public ICommand CancelResetCommand { get; }
     public ICommand OpenMonthlyRecapWrappedCommand { get; }
+    public ICommand CopyMonthlyRecapCommand { get; }
     public ICommand SetHistoryFilterCommand { get; }
     public ICommand CopyCurrentResultCommand { get; }
     public ICommand CopyHistoryResultCommand { get; }
@@ -2520,6 +2522,63 @@ public sealed class MainViewModel : ObservableObject
 
         IsMonthlyRecapVisible = false;
         IsWrappedVisible = true;
+    }
+
+    private void CopyMonthlyRecap()
+    {
+        var recapMonth = IsMonthlyRecapVisible && ParseMonthKey(Statistics.LastMonthlyRecapShown) is { } pendingMonth
+            ? pendingMonth
+            : new DateOnly(_wrappedPeriod.Year, _wrappedPeriod.Month, 1);
+
+        CopyText(BuildMonthlyRecapShareText(recapMonth));
+    }
+
+    private string BuildMonthlyRecapShareText(DateOnly month)
+    {
+        var culture = CultureInfo.GetCultureInfo("it-IT");
+        var start = new DateOnly(month.Year, month.Month, 1);
+        var end = start.AddMonths(1);
+        var label = culture.TextInfo.ToTitleCase(start.ToString("MMMM yyyy", culture));
+        var entries = Statistics.History
+            .Where(IsCompetitiveEntry)
+            .Select(entry => new { Entry = entry, Date = TryGetHistoryDate(entry.Date) })
+            .Where(item => item.Date is not null && item.Date.Value >= start && item.Date.Value < end)
+            .Select(item => item.Entry)
+            .ToList();
+        var played = entries.Count;
+        var won = entries.Count(entry => entry.Won);
+        var losses = played - won;
+        var winPercentage = played == 0 ? 0 : (int)Math.Round(won * 100.0 / played);
+        var wonAttempts = entries.Where(entry => entry.Won && entry.Attempts is >= 1 and <= 6).Select(entry => entry.Attempts).ToList();
+        var averageAttempts = wonAttempts.Count == 0 ? "n/d" : wonAttempts.Average().ToString("0.00", CultureInfo.InvariantCulture);
+        var totalScore = entries.Sum(GetEntryScore);
+        var bestStreak = CalculateBestPeriodStreak(entries);
+        var quickWins = entries.Count(entry => entry.Won && entry.Attempts is >= 1 and <= 3);
+        var timedEntries = entries.Where(entry => entry.DurationSeconds is not null).Select(entry => entry.DurationSeconds!.Value).ToList();
+        var averageTime = timedEntries.Count == 0 ? "n/d" : FormatDuration((int)Math.Round(timedEntries.Average()));
+
+        var builder = new StringBuilder();
+        builder.AppendLine($"📊 WORDLE ITALIANO · RIEPILOGO {label.ToUpperInvariant()}");
+        builder.AppendLine();
+        builder.AppendLine($"{won}/{played} vittorie · {winPercentage}%");
+        builder.AppendLine($"⭐ Punti: {totalScore}");
+        builder.AppendLine($"🎯 Media: {averageAttempts} tentativi");
+        builder.AppendLine($"🔥 Streak max: {bestStreak} {FormatDayWord(bestStreak)}");
+        builder.AppendLine($"⚡ Entro 3 tentativi: {quickWins}");
+        builder.AppendLine($"⏱ Tempo medio: {averageTime}");
+        if (losses > 0)
+        {
+            builder.AppendLine($"❌ Sconfitte: {losses}");
+        }
+
+        builder.AppendLine();
+        builder.AppendLine("Distribuzione:");
+        foreach (var attempt in Enumerable.Range(1, 6))
+        {
+            builder.AppendLine($"{attempt}/6: {wonAttempts.Count(value => value == attempt)}");
+        }
+
+        return builder.ToString().TrimEnd();
     }
 
     private void ResetGameData()

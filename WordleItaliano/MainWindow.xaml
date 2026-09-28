@@ -1313,6 +1313,10 @@
                                 <Button Content="&gt;"
                                         Command="{Binding NextWrappedPeriodCommand}"
                                         Style="{StaticResource TopButtonStyle}" />
+                                <Button Content="Copia riepilogo"
+                                        Command="{Binding CopyMonthlyRecapCommand}"
+                                        Visibility="{Binding IsWrappedMonthlyActive, Converter={StaticResource BoolVisibility}}"
+                                        Style="{StaticResource TopButtonStyle}" />
                             </WrapPanel>
 
                             <TextBlock Text="{Binding WrappedPeriodLabel}"
@@ -1492,6 +1496,9 @@
                     <WrapPanel HorizontalAlignment="Right">
                         <Button Content="Chiudi"
                                 Command="{Binding CloseOverlayCommand}"
+                                Style="{StaticResource TopButtonStyle}" />
+                        <Button Content="Copia riepilogo"
+                                Command="{Binding CopyMonthlyRecapCommand}"
                                 Style="{StaticResource TopButtonStyle}" />
                         <Button Content="Apri Wrapped completo"
                                 Command="{Binding OpenMonthlyRecapWrappedCommand}"

@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.13",
+    "title": "Riepilogo mensile condivisibile",
+    "items": [
+      "Aggiunto il pulsante Copia riepilogo nel popup di fine mese.",
+      "Il riepilogo mensile resta copiabile anche dal Wrapped mensile dopo aver chiuso il popup.",
+      "Il testo condiviso mostra vittorie, punti, media tentativi, streak max, tempi e distribuzione senza note tecniche."
+    ]
+  },
+  {
     "version": "1.5.12",
     "title": "Risultato condiviso piu' chiaro",
     "items": [
