@@ -14,7 +14,7 @@ namespace WordleItaliano.ViewModels;
 
 public sealed class MainViewModel : ObservableObject
 {
-    private const int DataMigrationVersion = 2;
+    private const int DataMigrationVersion = 3;
     private static readonly DateOnly OfficialStartDate = new(2026, 9, 1);
     private readonly WordRepository _repository;
     private readonly DailyWordService _dailyWordService;
@@ -2051,7 +2051,7 @@ public sealed class MainViewModel : ObservableObject
         Statistics.LastPlayedDate = _todayKey;
         if (won)
         {
-            var streak = previousWinDate == today.AddDays(-1)
+            var streak = previousWinDate is { } previousDate && IsConsecutiveStreakDate(previousDate, today)
                 ? Statistics.CurrentStreak + 1
                 : 1;
             var baseScore = CalculateScore(5, attempts);
@@ -2281,20 +2281,16 @@ public sealed class MainViewModel : ObservableObject
             .Where(item => item.Date is not null)
             .OrderBy(item => item.Date!.Value)
             .ToList();
+        RecalculateCompetitiveHistoryScores();
+
         var currentStreak = 0;
-        DateOnly? previousDate = null;
         foreach (var item in dailyByDate)
         {
-            if (!item.Entry.Won)
+            currentStreak = item.Entry.StreakAtDate ?? 0;
+            if (item.Entry.Won)
             {
-                currentStreak = 0;
-                previousDate = item.Date!.Value;
-                continue;
+                Statistics.BestStreak = Math.Max(Statistics.BestStreak, currentStreak);
             }
-
-            currentStreak = previousDate == item.Date!.Value.AddDays(-1) ? currentStreak + 1 : 1;
-            Statistics.BestStreak = Math.Max(Statistics.BestStreak, currentStreak);
-            previousDate = item.Date.Value;
         }
 
         var today = DateOnly.FromDateTime(DateTime.Today);
@@ -2302,7 +2298,7 @@ public sealed class MainViewModel : ObservableObject
         Statistics.CurrentStreak = lastDaily is not null &&
                                    lastDaily.Entry.Won &&
                                    lastDaily.Date is { } lastDate &&
-                                   lastDate >= today.AddDays(-1)
+                                   (lastDate == today || IsConsecutiveStreakDate(lastDate, today))
             ? currentStreak
             : 0;
 
@@ -2347,7 +2343,7 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
-        if (lastWinDate < today.AddDays(-1) && Statistics.CurrentStreak != 0)
+        if (lastWinDate != today && !IsConsecutiveStreakDate(lastWinDate, today) && Statistics.CurrentStreak != 0)
         {
             Statistics.CurrentStreak = 0;
             _storage.SaveStatistics(Statistics);
@@ -3388,7 +3384,7 @@ public sealed class MainViewModel : ObservableObject
         var previousWinDate = DateOnly.TryParse(Statistics.LastWinDate, out var parsedWinDate)
             ? parsedWinDate
             : (DateOnly?)null;
-        return previousWinDate == today.AddDays(-1)
+        return previousWinDate is { } previousDate && IsConsecutiveStreakDate(previousDate, today)
             ? Math.Max(0, Statistics.CurrentStreak) + 1
             : 1;
     }
@@ -3412,6 +3408,11 @@ public sealed class MainViewModel : ObservableObject
             return savedEntry.StreakAtDate.Value;
         }
 
+        if (date.Day == 1)
+        {
+            return 1;
+        }
+
         var previousDateKey = DailyWordService.FormatDateKey(date.AddDays(-1));
         var previousEntry = Statistics.History
             .LastOrDefault(entry => !entry.IsBonus && !entry.IsInfinite && entry.Date == previousDateKey && entry.Won);
@@ -3424,6 +3425,79 @@ public sealed class MainViewModel : ObservableObject
             ? previousEntry.StreakAtDate.Value
             : GetDailyStreakForDate(previousEntry.Date, true);
         return previousStreak + 1;
+    }
+
+    private void RecalculateCompetitiveHistoryScores()
+    {
+        var entriesByDate = Statistics.History
+            .Where(IsCompetitiveEntry)
+            .Select(entry => new { Entry = entry, Date = TryGetHistoryDate(entry.Date) })
+            .Where(item => item.Date is not null)
+            .GroupBy(item => item.Date!.Value)
+            .OrderBy(group => group.Key);
+
+        var currentStreak = 0;
+        DateOnly? previousDailyDate = null;
+        foreach (var group in entriesByDate)
+        {
+            var date = group.Key;
+            var entries = group.Select(item => item.Entry).OrderBy(entry => entry.IsBonus ? 1 : 0).ToList();
+            var dailyEntry = entries.LastOrDefault(entry => !entry.IsBonus && !entry.IsInfinite);
+            if (dailyEntry is not null)
+            {
+                if (dailyEntry.Won)
+                {
+                    currentStreak = previousDailyDate is { } previousDate && IsConsecutiveStreakDate(previousDate, date)
+                        ? currentStreak + 1
+                        : 1;
+                }
+                else
+                {
+                    currentStreak = 0;
+                }
+
+                previousDailyDate = date;
+                ApplyDayScoreToEntry(dailyEntry, dailyEntry.Won ? currentStreak : 0, 0);
+            }
+
+            var dayBaseScore = dailyEntry?.DayBaseScore ?? 0;
+            var previousFinalScore = dailyEntry?.DayFinalScore ?? 0;
+            foreach (var bonusEntry in entries.Where(entry => entry.IsBonus && !entry.IsInfinite))
+            {
+                var baseScore = GetEntryBaseScore(bonusEntry);
+                var nextBaseScore = dayBaseScore + baseScore;
+                var nextFinalScore = ApplyStreakMultiplier(nextBaseScore, currentStreak);
+                bonusEntry.BaseScore = baseScore;
+                bonusEntry.DayBaseScore = nextBaseScore;
+                bonusEntry.DayFinalScore = nextFinalScore;
+                bonusEntry.StreakAtDate = currentStreak;
+                bonusEntry.StreakMultiplierPercent = GetStreakMultiplierPercent(currentStreak);
+                bonusEntry.Points = bonusEntry.Won ? Math.Max(0, nextFinalScore - previousFinalScore) : 0;
+                bonusEntry.ScoreEarned = bonusEntry.Points;
+                dayBaseScore = nextBaseScore;
+                previousFinalScore = nextFinalScore;
+            }
+        }
+    }
+
+    private static void ApplyDayScoreToEntry(GameHistoryEntry entry, int streak, int previousFinalScore)
+    {
+        var baseScore = GetEntryBaseScore(entry);
+        var finalScore = ApplyStreakMultiplier(baseScore, streak);
+        entry.BaseScore = baseScore;
+        entry.DayBaseScore = baseScore;
+        entry.DayFinalScore = finalScore;
+        entry.StreakAtDate = streak;
+        entry.StreakMultiplierPercent = GetStreakMultiplierPercent(streak);
+        entry.Points = entry.Won ? Math.Max(0, finalScore - previousFinalScore) : 0;
+        entry.ScoreEarned = entry.Points;
+    }
+
+    private static bool IsConsecutiveStreakDate(DateOnly previousDate, DateOnly currentDate)
+    {
+        return previousDate.Year == currentDate.Year &&
+               previousDate.Month == currentDate.Month &&
+               previousDate == currentDate.AddDays(-1);
     }
 
     private DayScoreSnapshot GetDayScoreSnapshot(

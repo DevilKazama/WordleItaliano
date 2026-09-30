@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.17",
+    "title": "Streak di inizio mese",
+    "items": [
+      "La streak ora riparte correttamente all'inizio di ogni mese.",
+      "Il moltiplicatore punti del primo giorno del mese parte da x1.0.",
+      "Se hai gia' giocato il primo giorno del mese, punti e streak vengono sistemati al prossimo avvio."
+    ]
+  },
+  {
     "version": "1.5.16",
     "title": "Scelta del tema",
     "items": [
