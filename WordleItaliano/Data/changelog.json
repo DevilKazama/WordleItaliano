@@ -1,7 +1,15 @@
 [
   {
+    "version": "1.5.22",
+    "title": "Testi più chiari e coerenti",
+    "items": [
+      "Rivisti diversi testi dell'app per renderli più semplici, naturali e uniformi.",
+      "Migliorati alcuni messaggi di gioco, aggiornamento e statistiche."
+    ]
+  },
+  {
     "version": "1.5.21",
-    "title": "Temi piu' coerenti",
+    "title": "Temi più coerenti",
     "items": [
       "Uniformati colori e dettagli grafici tra Wordle Originale, IBP Chiaro e IBP Scuro, per mantenere ogni tema coerente in tutte le schermate.",
       "Piccoli miglioramenti e correzioni generali."
@@ -17,18 +25,18 @@
   },
   {
     "version": "1.5.19",
-    "title": "Patch Notes piu' complete",
+    "title": "Patch Notes più complete",
     "items": [
-      "Se hai saltato uno o piu' aggiornamenti, ora vedrai tutte le novita' che ti sei perso, non solo quelle dell'ultima versione.",
+      "Se hai saltato uno o più aggiornamenti, ora vedrai tutte le novità che ti sei perso, non solo quelle dell'ultima versione.",
       "Piccoli miglioramenti e correzioni generali."
     ]
   },
   {
     "version": "1.5.18",
-    "title": "Riepilogo periodo",
+    "title": "Scegli un periodo",
     "items": [
-      "Nel Wordle Wrapped arriva il nuovo Riepilogo periodo: puoi scegliere una data iniziale e finale e copiare il riepilogo di quell'intervallo.",
-      "La selezione date ora ha un calendario apribile, oltre alla possibilita' di scrivere la data a mano."
+      "Nel Wordle Wrapped puoi scegliere una data iniziale e finale e copiare il riepilogo di quell'intervallo.",
+      "La selezione date ora ha un calendario apribile, oltre alla possibilità di scrivere la data a mano."
     ]
   },
   {
@@ -37,7 +45,7 @@
     "items": [
       "La streak ora riparte correttamente all'inizio di ogni mese.",
       "Il moltiplicatore punti del primo giorno del mese parte da x1.0.",
-      "Se hai gia' giocato il primo giorno del mese, punti e streak vengono sistemati al prossimo avvio."
+      "Se hai già giocato il primo giorno del mese, punti e streak vengono sistemati al prossimo avvio."
     ]
   },
   {
@@ -55,31 +63,30 @@
     "items": [
       "Wordle Italiano ora ha un tema scuro ispirato ai colori IBP.",
       "Il logo IBP compare all'avvio e nell'intestazione del gioco.",
-      "Griglia, tastiera, popup e statistiche sono piu' coerenti con il nuovo stile.",
-      "Lo Storico e i pulsanti Copia sono piu' leggibili."
+      "Griglia, tastiera, finestre e statistiche sono più coerenti con il nuovo stile.",
+      "Lo Storico e i pulsanti Copia sono più leggibili."
     ]
   },
   {
     "version": "1.5.14",
-    "title": "Aggiornamenti piu' chiari",
+    "title": "Aggiornamenti più chiari",
     "items": [
-      "Il popup degli aggiornamenti usa un testo piu' naturale e meno tecnico.",
-      "Dai prossimi update potrai leggere le novita' direttamente prima di aggiornare.",
-      "Le note pubblicate su GitHub ora seguono il changelog dell'app."
+      "La finestra degli aggiornamenti usa un testo più naturale.",
+      "Dai prossimi aggiornamenti potrai leggere le novità direttamente prima di aggiornare."
     ]
   },
   {
     "version": "1.5.13",
     "title": "Riepilogo mensile condivisibile",
     "items": [
-      "Aggiunto il pulsante Copia riepilogo nel popup di fine mese.",
-      "Il riepilogo mensile resta copiabile anche dal Wrapped mensile dopo aver chiuso il popup.",
-      "Il testo condiviso mostra vittorie, punti, media tentativi, streak max, tempi e distribuzione senza note tecniche."
+      "Aggiunto il pulsante Copia riepilogo nel riepilogo di fine mese.",
+      "Il riepilogo mensile resta copiabile anche dal Wrapped mensile dopo aver chiuso la finestra.",
+      "Il testo condiviso mostra vittorie, punti, media tentativi, streak max, tempi e distribuzione."
     ]
   },
   {
     "version": "1.5.12",
-    "title": "Risultato condiviso piu' chiaro",
+    "title": "Risultato condiviso più chiaro",
     "items": [
       "Il copia risultato distingue meglio i punti della Giornaliera da quelli del Bonus.",
       "Con il moltiplicatore streak, il risultato condiviso mostra i punti della singola partita invece del totale unico del giorno."
@@ -98,38 +105,38 @@
   },
   {
     "version": "1.5.10",
-    "title": "Novita' della versione 1.5.10",
+    "title": "Novità della versione 1.5.10",
     "items": [
-      "Ridisegnato il layout di Giornaliera e Bonus per dare maggiore risalto alla griglia di gioco.",
-      "Aumentate dimensioni e leggibilita' della griglia per parole da 5, 6 e 7 lettere.",
+      "Ridisegnata la schermata di Giornaliera e Bonus per dare maggiore risalto alla griglia di gioco.",
+      "Aumentate dimensioni e leggibilità della griglia per parole da 5, 6 e 7 lettere.",
       "La griglia resta sempre centrata anche quando visualizzi il significato della parola.",
       "Riorganizzate e compattate le azioni di fine partita per sfruttare meglio lo spazio disponibile.",
       "Quando apri il significato, la tastiera virtuale viene nascosta e torna quando lo richiudi.",
-      "Ottimizzata la card del Dizionario per occupare meno spazio e gestire meglio le definizioni lunghe.",
+      "Ottimizzata la scheda del Dizionario per occupare meno spazio e gestire meglio le definizioni lunghe.",
       "Migliorata la gestione dello spazio verticale per evitare che griglia e tastiera vengano tagliate."
     ]
   },
   {
     "version": "1.5.9",
-    "title": "Novita' della versione 1.5.9",
+    "title": "Novità della versione 1.5.9",
     "items": [
       "Aggiunto il Dizionario: al termine di Giornaliera e Bonus puoi ora scoprire il significato della parola giocata.",
-      "Supportati piu' significati per le parole con diverse accezioni.",
+      "Supportati più significati per le parole con diverse accezioni.",
       "Migliorata la gestione di plurali, femminili e forme verbali.",
-      "Il dizionario funziona completamente offline.",
+      "Il dizionario funziona anche senza connessione.",
       "Miglioramenti e correzioni minori."
     ]
   },
   {
     "version": "1.5.8",
-    "title": "Novita' della versione 1.5.8",
+    "title": "Novità della versione 1.5.8",
     "items": [
-      "Nel Wrapped la card della streak ora si chiama Streak max, cosi' e' chiaro che indica il record del periodo."
+      "Nel Wrapped la scheda della streak ora si chiama Streak max, così è chiaro che indica il record del periodo."
     ]
   },
   {
     "version": "1.5.7",
-    "title": "Novita' della versione 1.5.7",
+    "title": "Novità della versione 1.5.7",
     "items": [
       "La streak ora dipende solo dalla Giornaliera: il Bonus non la interrompe mai.",
       "Se salti un giorno o perdi la Giornaliera, la streak riparte dalla prossima vittoria.",
@@ -140,60 +147,60 @@
   },
   {
     "version": "1.5.6",
-    "title": "Novita' della versione 1.5.6",
+    "title": "Novità della versione 1.5.6",
     "items": [
-      "Il Changelog mostra solo le novita' utili per chi gioca.",
-      "Le descrizioni degli aggiornamenti sono piu' brevi e piu' chiare."
+      "Le Novità mostrano solo le informazioni utili per chi gioca.",
+      "Le descrizioni degli aggiornamenti sono più brevi e più chiare."
     ]
   },
   {
     "version": "1.5.5",
-    "title": "Novita' della versione 1.5.5",
+    "title": "Novità della versione 1.5.5",
     "items": [
-      "Il pulsante Changelog ora mostra correttamente gli ultimi aggiornamenti.",
-      "Dopo un aggiornamento, alla prima apertura appare di nuovo il riepilogo delle novita'."
+      "Il pulsante Novità ora mostra correttamente gli ultimi aggiornamenti.",
+      "Dopo un aggiornamento, alla prima apertura appare di nuovo il riepilogo delle novità."
     ]
   },
   {
     "version": "1.5.4",
-    "title": "Novita' della versione 1.5.4",
+    "title": "Novità della versione 1.5.4",
     "items": [
-      "Dopo un aggiornamento l'app mostra una finestra con le novita' principali.",
-      "Nelle impostazioni c'e' il nuovo pulsante Changelog per rileggere gli ultimi aggiornamenti quando vuoi."
+      "Dopo un aggiornamento l'app mostra una finestra con le novità principali.",
+      "Nelle impostazioni c'è il nuovo pulsante Novità per rileggere gli ultimi aggiornamenti quando vuoi."
     ]
   },
   {
     "version": "1.5.3",
-    "title": "Novita' della versione 1.5.3",
+    "title": "Novità della versione 1.5.3",
     "items": [
-      "Il gioco accetta molte piu' parole italiane comuni nei tentativi.",
+      "Il gioco accetta molte più parole italiane comuni nei tentativi.",
       "Sono state aggiunte molte coniugazioni, per esempio parole come 'morirai'."
     ]
   },
   {
     "version": "1.5.2",
-    "title": "Novita' della versione 1.5.2",
+    "title": "Novità della versione 1.5.2",
     "items": [
-      "Risultato copiato piu' leggibile e ordinato, con titolo, risultato, timer, punti e griglia separati.",
-      "La modalita' Infinita resta esclusa dai punti competitivi anche nel testo condiviso."
+      "Risultato copiato più leggibile e ordinato, con titolo, risultato, timer, punti e griglia separati.",
+      "La modalità Infinita resta esclusa dai punti competitivi anche nel testo condiviso."
     ]
   },
   {
     "version": "1.5.1",
-    "title": "Novita' della versione 1.5.1",
+    "title": "Novità della versione 1.5.1",
     "items": [
-      "La finestra degli aggiornamenti e' piu' pulita.",
-      "Le novita' dell'aggiornamento restano visibili dopo il riavvio dell'app."
+      "La finestra degli aggiornamenti è più pulita.",
+      "Le novità dell'aggiornamento restano visibili dopo il riavvio dell'app."
     ]
   },
   {
     "version": "1.5.0",
-    "title": "Novita' della versione 1.5.0",
+    "title": "Novità della versione 1.5.0",
     "items": [
-      "Timer anche per Bonus random e modalita' Infinita.",
-      "Il timer parte alla prima lettera digitata e resta separato per ogni modalita'.",
+      "Timer anche per Bonus random e modalità Infinita.",
+      "Il timer parte alla prima lettera digitata e resta separato per ogni modalità.",
       "Barra di avanzamento durante il download degli aggiornamenti.",
-      "Changelog mostrato una sola volta dopo l'aggiornamento."
+      "Novità mostrate una sola volta dopo l'aggiornamento."
     ]
   }
 ]

@@ -203,8 +203,8 @@ public sealed class MainViewModel : ObservableObject
             new StatCardViewModel("Vittorie"),
             new StatCardViewModel("Media"),
             new StatCardViewModel("Streak max"),
-            new StatCardViewModel("Entro 3"),
-            new StatCardViewModel("Media pt")
+            new StatCardViewModel("Entro 3 tentativi"),
+            new StatCardViewModel("Punti medi")
         ];
         MonthlyRecapCards =
         [
@@ -214,15 +214,15 @@ public sealed class MainViewModel : ObservableObject
             new StatCardViewModel("Vittorie"),
             new StatCardViewModel("Media"),
             new StatCardViewModel("Miglior streak"),
-            new StatCardViewModel("Entro 3"),
+            new StatCardViewModel("Entro 3 tentativi"),
             new StatCardViewModel("Punti"),
             new StatCardViewModel("Tempo medio")
         ];
         WrappedTimeCards =
         [
-            new StatCardViewModel("Media tempo"),
-            new StatCardViewModel("Piu' veloce"),
-            new StatCardViewModel("Piu' lenta"),
+            new StatCardViewModel("Tempo medio"),
+            new StatCardViewModel("Più veloce"),
+            new StatCardViewModel("Più lenta"),
             new StatCardViewModel("Tempo totale")
         ];
         WrappedWinRows = new ObservableCollection<WinDistributionRowViewModel>(
@@ -924,7 +924,7 @@ public sealed class MainViewModel : ObservableObject
 
         PersistActiveGameTime();
         StopCurrentTimer();
-        StartNewGameForDate(today, "E' disponibile una nuova sfida giornaliera.");
+        StartNewGameForDate(today, "È disponibile una nuova sfida giornaliera.");
         ShowToast("Nuova sfida giornaliera disponibile.");
         CheckPendingMonthlyRecap();
         return true;
@@ -1013,10 +1013,10 @@ public sealed class MainViewModel : ObservableObject
         if (status != GameStatus.Playing)
         {
             Message = _isInfiniteActive
-                ? "Partita infinita completata."
+                ? "Hai già completato questa partita infinita."
                 : _isBonusActive
-                ? "Bonus random gia' completato."
-                : "Hai gia' completato la parola di oggi.";
+                ? "Hai già completato il Bonus."
+                : "Hai già completato la parola di oggi.";
             return;
         }
 
@@ -1121,9 +1121,9 @@ public sealed class MainViewModel : ObservableObject
             var attempts = _currentRow + 1;
             var isPerfectShot = TryMarkCurrentPerfectShot(attempts);
             Message = _isInfiniteActive
-                ? "Infinita vinta. Puoi farne un'altra."
+                ? "Hai vinto! Puoi giocarne subito un'altra."
                 : _isBonusActive
-                ? isPerfectShot ? "Colpo Perfetto!" : "Bonus vinto: punti aggiornati."
+                ? isPerfectShot ? "Colpo Perfetto!" : "Bonus vinto!"
                 : isPerfectShot ? "Colpo Perfetto!"
                 : _currentRow switch
                 {
@@ -1592,7 +1592,7 @@ public sealed class MainViewModel : ObservableObject
         LoadGuesses(_dailyGuesses);
         if (_dailyStatus == GameStatus.Won)
         {
-            Message = "Parola di oggi gia' completata.";
+            Message = "Hai già completato la parola di oggi.";
             UpsertHistory(CreateDailyHistoryEntry(true, _dailyGuesses.Count));
             if (_isBonusUnlocked && _bonusStatus == GameStatus.Playing && _bonusGuesses.Count == 0)
             {
@@ -1705,11 +1705,11 @@ public sealed class MainViewModel : ObservableObject
         }
 
         _currentSolution = _infiniteSolution;
-        SetModeBadge("Infinita", "Statistiche separate");
+        SetModeBadge("Infinita", "Parole senza limite");
         SetupBoard(5);
         LoadGuesses(_infiniteGuesses);
         ResumeCurrentTimerIfNeeded();
-        Message = "Modalita' infinita: parola casuale da 5 lettere.";
+        Message = "Modalità infinita: parola casuale da 5 lettere.";
         RefreshCopyButtonVisibility();
         SaveGame();
     }
@@ -1734,7 +1734,7 @@ public sealed class MainViewModel : ObservableObject
         SetupDailyBoard();
         Message = _dailyStatus switch
         {
-            GameStatus.Won => "Parola di oggi gia' completata.",
+            GameStatus.Won => "Hai già completato la parola di oggi.",
             GameStatus.Lost => $"Parola di oggi completata. Era {_dailySolution.ToUpperInvariant()}.",
             _ => "Indovina la parola di oggi."
         };
@@ -1761,7 +1761,7 @@ public sealed class MainViewModel : ObservableObject
         ResumeCurrentTimerIfNeeded();
         Message = _bonusStatus switch
         {
-            GameStatus.Won => "Bonus random gia' completato.",
+            GameStatus.Won => "Hai già completato il Bonus.",
             GameStatus.Lost => $"Bonus random completato. La parola era {_bonusSolution.ToUpperInvariant()}.",
             _ => $"Bonus random: parola da {_bonusWordLength} lettere."
         };
@@ -2025,7 +2025,7 @@ public sealed class MainViewModel : ObservableObject
         var snapshot = GetDayScoreSnapshot(TryGetHistoryDate(entry.Date) ?? DateOnly.FromDateTime(DateTime.Today), entry);
         var todayScore = snapshot.BaseScore == snapshot.FinalScore
             ? $"{snapshot.FinalScore} pt"
-            : $"{snapshot.BaseScore} -> {snapshot.FinalScore} pt";
+            : $"{snapshot.BaseScore} → {snapshot.FinalScore} pt";
         ScoreLineText = $"Punti di oggi: {todayScore} · {monthLabel}: {GetShareMonthScore(entry)} pt";
         IsScoreLineVisible = true;
     }
@@ -2903,7 +2903,7 @@ public sealed class MainViewModel : ObservableObject
         var end = DateOnly.FromDateTime(WrappedCustomEndDate.Value);
         if (end < start)
         {
-            WrappedCustomSummaryText = "Intervallo non valido.";
+            WrappedCustomSummaryText = "La data finale deve essere dopo quella iniziale.";
             return;
         }
 
@@ -2974,9 +2974,9 @@ public sealed class MainViewModel : ObservableObject
 
         IsResetConfirmVisible = false;
         IsMonthlyRecapVisible = false;
-        StartNewGameForDate(DateOnly.FromDateTime(DateTime.Today), "Dati di gioco azzerati.");
+        StartNewGameForDate(DateOnly.FromDateTime(DateTime.Today), "Dati di gioco cancellati.");
         _storage.SaveStatistics(Statistics);
-        ShowToast("Dati di gioco azzerati.");
+        ShowToast("Dati di gioco cancellati.");
     }
 
     private static DateOnly? TryGetHistoryDate(string value)
@@ -3106,7 +3106,7 @@ public sealed class MainViewModel : ObservableObject
             var result = entry.Won ? "Vinta" : "Persa";
             var attempts = entry.Won ? $"{entry.Attempts}/6" : "-/6";
             var guesses = entry.Guesses.Count == 0
-                ? "Nessun tentativo salvato"
+                ? "Nessun tentativo disponibile"
                 : string.Join("  ", entry.Guesses.Select(guess => guess.ToUpperInvariant()));
             var mode = entry.IsBonus
                 ? $"Bonus random · {entry.WordLength} lettere"
@@ -3132,7 +3132,7 @@ public sealed class MainViewModel : ObservableObject
 
         IsHistoryEmptyVisible = HistoryRows.Count == 0;
         HistoryEmptyMessage = _historyFilter == "Infinite" && Statistics.InfinitePlayed > 0
-            ? "Le partite infinite precedenti hanno solo statistiche: le parole non erano ancora salvate nello storico. Le prossime infinite completate appariranno qui."
+            ? "Le vecchie partite Infinite non sono disponibili nello Storico. Le nuove partite compariranno qui."
             : "Nessuna partita salvata per questo filtro.";
     }
 
@@ -3326,7 +3326,7 @@ public sealed class MainViewModel : ObservableObject
         IsSplashVisible = false;
         IsProfileDialogVisible = false;
         ChangelogTitle = string.IsNullOrWhiteSpace(entry.Title)
-            ? $"Novita' della versione {entry.Version}"
+            ? $"Novità della versione {entry.Version}"
             : entry.Title;
         ChangelogText = string.Join(Environment.NewLine, entry.Items.Select(item => $"- {item}"));
         IsChangelogVisible = true;
@@ -3337,7 +3337,7 @@ public sealed class MainViewModel : ObservableObject
         var entries = _changelogService.GetLatestEntries();
         if (entries.Count == 0)
         {
-            ShowToast("Changelog non disponibile.");
+            ShowToast("Novità non disponibili.");
             return;
         }
 
@@ -3416,16 +3416,16 @@ public sealed class MainViewModel : ObservableObject
                 await ShowUpdateDialogAsync(result.Update);
                 break;
             case AppUpdateCheckStatus.NoUpdates:
-                UpdateStatusText = "Hai gia' l'ultima versione.";
+                UpdateStatusText = "Hai già l'ultima versione.";
                 ShowToast("Nessun aggiornamento disponibile.");
                 break;
             case AppUpdateCheckStatus.NotInstalled:
-                UpdateStatusText = "Gli aggiornamenti funzionano dopo l'installazione con Setup.";
-                ShowToast("Versione di sviluppo: updater non attivo.");
+                UpdateStatusText = "Gli aggiornamenti automatici non sono disponibili in questa versione.";
+                ShowToast("Aggiornamenti automatici non disponibili.");
                 break;
             default:
-                UpdateStatusText = $"Aggiornamento non riuscito: {result.ErrorMessage ?? "errore sconosciuto"}";
-                ShowToast("Controllo aggiornamenti non riuscito.");
+                UpdateStatusText = "Non è stato possibile completare l'aggiornamento.";
+                ShowToast("Non è stato possibile completare l'aggiornamento.");
                 break;
         }
     }
@@ -3439,7 +3439,7 @@ public sealed class MainViewModel : ObservableObject
         IsProfileDialogVisible = false;
         UpdateDialogTitle = "Aggiornamento disponibile";
         AvailableVersionText = $"Nuova versione {update.TargetFullRelease.Version}";
-        UpdateDialogMessage = "Ci sono novita' pronte. Puoi aggiornare ora: al termine l'app si riaprira' da sola.";
+        UpdateDialogMessage = "Ci sono novità! Puoi aggiornare ora: al termine Wordle si riaprirà automaticamente.";
         UpdateReleaseNotesText = string.Empty;
         IsUpdateReleaseNotesVisible = false;
         UpdateProgressText = string.Empty;
@@ -3463,7 +3463,7 @@ public sealed class MainViewModel : ObservableObject
         }
 
         IsUpdateBusy = true;
-        UpdateProgressText = "Download aggiornamento...";
+        UpdateProgressText = "Download in corso...";
         UpdateProgressValue = 0;
         PersistActiveGameTime();
 
@@ -3480,7 +3480,7 @@ public sealed class MainViewModel : ObservableObject
             IsUpdateBusy = false;
             UpdateProgressText = string.Empty;
             UpdateProgressValue = 0;
-            UpdateDialogMessage = $"Aggiornamento non riuscito: {result.ErrorMessage ?? "errore sconosciuto"}";
+            UpdateDialogMessage = "Non è stato possibile completare l'aggiornamento.";
             UpdateReleaseNotesText = string.Empty;
             IsUpdateReleaseNotesVisible = false;
         }
@@ -3884,7 +3884,7 @@ public sealed class MainViewModel : ObservableObject
         var finalScore = GetEntryScore(entry);
         return baseScore == finalScore
             ? $"{finalScore}"
-            : $"{baseScore} -> {finalScore}";
+            : $"{baseScore} → {finalScore}";
     }
 
     private static int GetEntryScore(GameHistoryEntry entry)

@@ -763,7 +763,7 @@
                             Margin="0,20,0,16"
                             Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
 
-                    <TextBlock Text="Distribuzione infinita"
+                    <TextBlock Text="Risultati Infinita"
                                FontSize="16"
                                FontWeight="Bold"
                                Margin="0,0,0,10"
@@ -807,7 +807,7 @@
                             Margin="0,20,0,16"
                             Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
 
-                    <Button Content="Reset dati di gioco"
+                    <Button Content="Cancella dati di gioco"
                             HorizontalAlignment="Left"
                             Command="{Binding ShowResetConfirmCommand}"
                             Style="{StaticResource TopButtonStyle}" />
@@ -949,7 +949,7 @@
                             BorderThickness="1"
                             BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
                             Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}">
-                        <TextBlock Text="Se vinci la giornaliera, si sblocca il bonus random da 5, 6 o 7 lettere per aumentare i punti del giorno. Il bonus non interrompe la streak giornaliera."
+                        <TextBlock Text="Se vinci la Giornaliera, sblocchi un Bonus random da 5, 6 o 7 lettere per aumentare i punti del giorno. Il Bonus non può interrompere la tua streak."
                                    FontSize="13"
                                    TextWrapping="Wrap"
                                    Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
@@ -1087,7 +1087,7 @@
                                 </StackPanel>
                                 <StackPanel Grid.Column="1"
                                             Orientation="Horizontal">
-                                    <Button Content="Changelog"
+                                    <Button Content="Novità"
                                             Command="{Binding ShowChangelogCommand}"
                                             Style="{StaticResource TopButtonStyle}" />
                                     <Button Content="Controlla"
@@ -1153,7 +1153,7 @@
                             Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}"
                             BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}">
                         <StackPanel>
-                            <TextBlock Text="Novita'"
+                            <TextBlock Text="Novità"
                                        FontWeight="Bold"
                                        Margin="0,0,0,8"
                                        Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
@@ -1184,7 +1184,7 @@
                                  BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
 
                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                        <Button Content="Piu' tardi"
+                        <Button Content="Più tardi"
                                 Command="{Binding DismissUpdateCommand}"
                                 Style="{StaticResource TopButtonStyle}" />
                         <Button Content="Aggiorna ora"
@@ -1556,7 +1556,7 @@
                                             <ColumnDefinition Width="*" />
                                             <ColumnDefinition Width="Auto" />
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Text="Riepilogo periodo"
+                                        <TextBlock Text="Scegli un periodo"
                                                    FontSize="14"
                                                    FontWeight="Bold"
                                                    Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
@@ -1955,12 +1955,12 @@
                     BorderThickness="1"
                     CornerRadius="8">
                 <StackPanel>
-                    <TextBlock Text="Reset dati di gioco"
+                    <TextBlock Text="Cancella dati di gioco"
                                FontSize="24"
                                FontWeight="Black"
                                Margin="0,0,0,16"
                                Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
-                    <TextBlock Text="Questa operazione cancellera' definitivamente storico, statistiche, streak e punteggi."
+                    <TextBlock Text="Questa operazione cancellerà definitivamente storico, statistiche, streak e punteggi."
                                FontSize="14"
                                LineHeight="22"
                                TextWrapping="Wrap"
@@ -1976,7 +1976,7 @@
                         <Button Content="Annulla"
                                 Command="{Binding CancelResetCommand}"
                                 Style="{StaticResource TopButtonStyle}" />
-                        <Button Content="Resetta dati"
+                        <Button Content="Cancella dati"
                                 Command="{Binding ConfirmResetCommand}"
                                 Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
                                 Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
