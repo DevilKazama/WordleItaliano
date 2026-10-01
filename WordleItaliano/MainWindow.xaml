@@ -48,9 +48,93 @@
             <Setter Property="BorderBrush" Value="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
             <Style.Triggers>
                 <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
-                    <Setter Property="Background" Value="#00747A" />
-                    <Setter Property="Foreground" Value="White" />
-                    <Setter Property="BorderBrush" Value="#00747A" />
+                    <Setter Property="Background" Value="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+                    <Setter Property="Foreground" Value="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
+                    <Setter Property="BorderBrush" Value="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WrappedDateTextBoxStyle" TargetType="TextBox">
+            <Setter Property="Width" Value="92" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Padding" Value="7,0" />
+            <Setter Property="VerticalContentAlignment" Value="Center" />
+            <Setter Property="HorizontalContentAlignment" Value="Center" />
+            <Setter Property="FontSize" Value="13" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Background" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=CalendarDay}" />
+            <Setter Property="Foreground" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+            <Setter Property="BorderBrush" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CaretBrush" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+            <Setter Property="SelectionBrush" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+        </Style>
+
+        <Style x:Key="WrappedDateDropButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="28" />
+            <Setter Property="Height" Value="34" />
+            <Setter Property="Margin" Value="4,0,0,0" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Background" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+            <Setter Property="Foreground" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
+            <Setter Property="BorderBrush" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentHover}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentHover}" />
+                    <Setter Property="BorderBrush" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WrappedCalendarNavButtonStyle" TargetType="Button">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="26" />
+            <Setter Property="Background" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=CalendarNav}" />
+            <Setter Property="Foreground" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+            <Setter Property="BorderBrush" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontWeight" Value="Bold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=CalendarHover}" />
+                    <Setter Property="BorderBrush" Value="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <Style x:Key="WrappedCalendarDayCellStyle" TargetType="Button">
+            <Setter Property="Width" Value="24" />
+            <Setter Property="Height" Value="22" />
+            <Setter Property="Margin" Value="1" />
+            <Setter Property="Padding" Value="0" />
+            <Setter Property="Background" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=CalendarDay}" />
+            <Setter Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+            <Setter Property="BorderBrush" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="FontSize" Value="10" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Focusable" Value="False" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=CalendarHover}" />
+                    <Setter Property="BorderBrush" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+                    <Setter Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                </Trigger>
+                <DataTrigger Binding="{Binding IsCurrentMonth}" Value="False">
+                    <Setter Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=CalendarOutside}" />
+                </DataTrigger>
+                <DataTrigger Binding="{Binding IsSelected}" Value="True">
+                    <Setter Property="Background" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+                    <Setter Property="BorderBrush" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentHover}" />
+                    <Setter Property="Foreground" Value="{Binding Tag, RelativeSource={RelativeSource Self}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
                 </DataTrigger>
             </Style.Triggers>
         </Style>
@@ -85,9 +169,9 @@
 
         <Style x:Key="PrimaryCompactButtonStyle" TargetType="Button" BasedOn="{StaticResource TopButtonStyle}">
             <Setter Property="Padding" Value="10,6" />
-            <Setter Property="Background" Value="#00747A" />
-            <Setter Property="Foreground" Value="White" />
-            <Setter Property="BorderBrush" Value="#009AA3" />
+            <Setter Property="Background" Value="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
+            <Setter Property="Foreground" Value="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
+            <Setter Property="BorderBrush" Value="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentHover}" />
             <Setter Property="BorderThickness" Value="1" />
         </Style>
 
@@ -166,16 +250,16 @@
                         Padding="10,2"
                         Margin="0,0,0,3"
                         CornerRadius="6"
-                        Background="#00747A">
+                        Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="{Binding ModeBadgeText}"
                                    FontSize="12"
                                    FontWeight="Bold"
-                                   Foreground="White" />
+                                   Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
                         <TextBlock Text="{Binding ModeBadgeDetail}"
                                    FontSize="12"
                                    Margin="8,0,0,0"
-                                   Foreground="White"
+                                   Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
                                    Opacity="0.86" />
                     </StackPanel>
                 </Border>
@@ -204,7 +288,7 @@
                            FontWeight="SemiBold"
                            Margin="0,1,0,0"
                            Visibility="{Binding IsScoreLineVisible, Converter={StaticResource BoolVisibility}}"
-                           Foreground="#00747A" />
+                           Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
             </StackPanel>
 
             <Grid Grid.Row="1">
@@ -254,7 +338,7 @@
                                             <Style.Triggers>
                                                 <DataTrigger Binding="{Binding IsSelected}" Value="True">
                                                     <Setter Property="BorderThickness" Value="4" />
-                                                    <Setter Property="BorderBrush" Value="#009AA3" />
+                                                    <Setter Property="BorderBrush" Value="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentHover}" />
                                                 </DataTrigger>
                                             </Style.Triggers>
                                         </Style>
@@ -529,7 +613,7 @@
                                FontWeight="SemiBold"
                                TextAlignment="Center"
                                Margin="0,6,0,0"
-                               Foreground="#00747A" />
+                               Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
                     <TextBlock Text="Hai avuto culo. Approfittane."
                                FontSize="14"
                                TextAlignment="Center"
@@ -553,8 +637,8 @@
                                 MinWidth="112"
                                 Height="40"
                                 FontWeight="Bold"
-                                Background="#00747A"
-                                Foreground="White"
+                                Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                                Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
                                 BorderThickness="0"
                                 Cursor="Hand"
                                 Focusable="False" />
@@ -658,14 +742,14 @@
                                                 Opacity="0.9" />
                                         <Border Width="{Binding BarWidth}"
                                                 HorizontalAlignment="Left"
-                                                Background="#00747A"
+                                                Background="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
                                                 CornerRadius="5" />
                                         <TextBlock Text="{Binding Wins}"
                                                    Margin="10,0,0,0"
                                                    VerticalAlignment="Center"
                                                    HorizontalAlignment="Left"
                                                    FontWeight="Bold"
-                                                   Foreground="White" />
+                                                   Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
                                     </Grid>
                                 </Grid>
                             </DataTemplate>
@@ -702,14 +786,14 @@
                                                 Opacity="0.9" />
                                         <Border Width="{Binding BarWidth}"
                                                 HorizontalAlignment="Left"
-                                                Background="#00747A"
+                                                Background="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
                                                 CornerRadius="5" />
                                         <TextBlock Text="{Binding Wins}"
                                                    Margin="10,0,0,0"
                                                    VerticalAlignment="Center"
                                                    HorizontalAlignment="Left"
                                                    FontWeight="Bold"
-                                                   Foreground="White" />
+                                                   Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
                                     </Grid>
                                 </Grid>
                             </DataTemplate>
@@ -755,8 +839,8 @@
                             Height="44"
                             FontSize="16"
                             FontWeight="Bold"
-                            Background="#00747A"
-                            Foreground="White"
+                            Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                            Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
                             BorderThickness="0"
                             Cursor="Hand"
                             Focusable="False" />
@@ -802,7 +886,7 @@
                             <ColumnDefinition Width="32" />
                             <ColumnDefinition Width="*" />
                         </Grid.ColumnDefinitions>
-                        <Border Width="22" Height="22" Background="#00747A" />
+                        <Border Width="22" Height="22" Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
                         <TextBlock Grid.Column="1"
                                    Text="Lettera giusta nella posizione giusta."
                                    VerticalAlignment="Center"
@@ -1067,7 +1151,7 @@
                                  Value="{Binding UpdateProgressValue}"
                                  Margin="0,0,0,14"
                                  Visibility="{Binding IsUpdateBusy, Converter={StaticResource BoolVisibility}}"
-                                 Foreground="#00747A"
+                                  Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
                                  Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}"
                                  BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}" />
 
@@ -1080,9 +1164,9 @@
                                 Margin="8,4,4,4"
                                 Padding="14,8"
                                 FontWeight="Bold"
-                                Foreground="White"
-                                Background="#00747A"
-                                BorderBrush="#00747A"
+                                Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
+                                Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                                BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
                                 BorderThickness="1"
                                 Cursor="Hand"
                                 Focusable="False" />
@@ -1140,9 +1224,9 @@
                             HorizontalAlignment="Right"
                             MinWidth="96"
                             FontWeight="Bold"
-                            Background="#00747A"
-                            Foreground="White"
-                            BorderBrush="#00747A"
+                            Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                            Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
+                            BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
                             BorderThickness="1"
                             Cursor="Hand"
                             Focusable="False" />
@@ -1160,7 +1244,7 @@
                     Padding="24"
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
-                    Background="#263034"
+                    Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
                     BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
                     BorderThickness="1"
                     CornerRadius="8">
@@ -1277,7 +1361,7 @@
                                                 Padding="16"
                                                 BorderThickness="1"
                                                 BorderBrush="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}"
-                                                Background="#202B2F"
+                                                Background="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}"
                                                 CornerRadius="8">
                                             <Grid>
                                                 <Grid.RowDefinitions>
@@ -1298,7 +1382,7 @@
                                                     <TextBlock Text="{Binding Mode}"
                                                                FontSize="11"
                                                                Margin="0,2,0,0"
-                                                               Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                                               Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
                                                 </StackPanel>
 
                                                 <StackPanel Grid.Row="0" Grid.Column="1" HorizontalAlignment="Right" Margin="16,0,0,0">
@@ -1321,27 +1405,27 @@
                                                     <TextBlock Text="{Binding Solution}"
                                                                FontSize="22"
                                                                FontWeight="Black"
-                                                               Foreground="#00747A" />
+                                                               Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}" />
                                                     <Border Margin="12,3,0,3"
                                                             Padding="8,3"
                                                             CornerRadius="5"
-                                                            Background="#00747A">
+                                                            Background="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}">
                                                         <TextBlock Text="{Binding ResultSummary}"
                                                                    FontSize="11"
                                                                    FontWeight="Bold"
-                                                                   Foreground="White" />
+                                                                   Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
                                                     </Border>
                                                     <TextBlock Text="{Binding ResultTone}"
                                                                Margin="10,5,0,0"
                                                                FontSize="11"
                                                                FontWeight="SemiBold"
-                                                               Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                                               Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
                                                     <TextBlock Text="{Binding TimeText}"
                                                                Margin="10,5,0,0"
                                                                FontSize="11"
                                                                FontWeight="SemiBold"
                                                                Visibility="{Binding IsTimeVisible, Converter={StaticResource BoolVisibility}}"
-                                                               Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                                               Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
                                                 </StackPanel>
 
                                                 <TextBlock Grid.Row="2"
@@ -1351,7 +1435,7 @@
                                                            FontSize="12"
                                                            LineHeight="20"
                                                            TextWrapping="Wrap"
-                                                           Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                                           Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
                                             </Grid>
                                         </Border>
                                     </DataTemplate>
@@ -1416,9 +1500,8 @@
                                 <Button Content="&gt;"
                                         Command="{Binding NextWrappedPeriodCommand}"
                                         Style="{StaticResource TopButtonStyle}" />
-                                <Button Content="Copia riepilogo"
+                                <Button Content="{Binding WrappedCopyCurrentPeriodText}"
                                         Command="{Binding CopyMonthlyRecapCommand}"
-                                        Visibility="{Binding IsWrappedMonthlyActive, Converter={StaticResource BoolVisibility}}"
                                         Style="{StaticResource TopButtonStyle}" />
                             </WrapPanel>
 
@@ -1427,6 +1510,226 @@
                                        FontWeight="Bold"
                                        Margin="4,0,0,14"
                                        Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+
+                            <Border Padding="14"
+                                    Margin="0,0,0,14"
+                                    CornerRadius="6"
+                                    BorderThickness="1"
+                                    Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Background}"
+                                    BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Border}">
+                                <Grid>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+                                    <Grid Grid.Row="0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Riepilogo periodo"
+                                                   FontSize="14"
+                                                   FontWeight="Bold"
+                                                   Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                        <TextBlock Grid.Column="1"
+                                                   Text="{Binding WrappedCustomSummaryText}"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentHover}" />
+                                    </Grid>
+
+                                    <Grid Grid.Row="1" Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="24" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="Dal"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,7,0"
+                                                   Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                        <Grid x:Name="WrappedStartDatePickerRoot"
+                                              Grid.Column="1"
+                                              Margin="0,0,12,0">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding WrappedCustomStartText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource WrappedDateTextBoxStyle}" />
+                                            <Button Grid.Column="1"
+                                                    Content="▼"
+                                                    Command="{Binding ToggleWrappedCalendarCommand}"
+                                                    CommandParameter="Start"
+                                                    Style="{StaticResource WrappedDateDropButtonStyle}" />
+                                            <Popup IsOpen="{Binding IsWrappedStartCalendarOpen, Mode=TwoWay}"
+                                                   Placement="Bottom"
+                                                   PlacementTarget="{Binding ElementName=WrappedStartDatePickerRoot}"
+                                                   DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}"
+                                                   StaysOpen="False"
+                                                   AllowsTransparency="True">
+                                                <Border Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                                                        BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                                                        BorderThickness="1"
+                                                        Padding="8">
+                                                    <StackPanel>
+                                                        <Grid Margin="0,0,0,7">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Button Content="‹"
+                                                                    Command="{Binding MoveWrappedCalendarMonthCommand}"
+                                                                    CommandParameter="Start:-1"
+                                                                    Style="{StaticResource WrappedCalendarNavButtonStyle}" />
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding WrappedStartCalendarTitle}"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       FontSize="12"
+                                                                       FontWeight="Bold"
+                                                                       Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                                            <Button Grid.Column="2"
+                                                                    Content="›"
+                                                                    Command="{Binding MoveWrappedCalendarMonthCommand}"
+                                                                    CommandParameter="Start:1"
+                                                                    Style="{StaticResource WrappedCalendarNavButtonStyle}" />
+                                                        </Grid>
+                                                        <UniformGrid Columns="7" Margin="0,0,0,4">
+                                                            <TextBlock Text="L" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="M" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="M" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="G" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="V" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="S" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="D" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                        </UniformGrid>
+                                                        <ItemsControl ItemsSource="{Binding WrappedStartCalendarDays}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <UniformGrid Columns="7" />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Button Content="{Binding DayText}"
+                                                                            Tag="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                            Command="{Binding DataContext.SelectWrappedCalendarDateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Style="{StaticResource WrappedCalendarDayCellStyle}" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Popup>
+                                        </Grid>
+                                        <TextBlock Grid.Column="3"
+                                                   Text="Al"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,7,0"
+                                                   Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                        <Grid x:Name="WrappedEndDatePickerRoot"
+                                              Grid.Column="4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBox Text="{Binding WrappedCustomEndText, Mode=TwoWay, UpdateSourceTrigger=LostFocus}"
+                                                     Style="{StaticResource WrappedDateTextBoxStyle}" />
+                                            <Button Grid.Column="1"
+                                                    Content="▼"
+                                                    Command="{Binding ToggleWrappedCalendarCommand}"
+                                                    CommandParameter="End"
+                                                    Style="{StaticResource WrappedDateDropButtonStyle}" />
+                                            <Popup IsOpen="{Binding IsWrappedEndCalendarOpen, Mode=TwoWay}"
+                                                   Placement="Bottom"
+                                                   PlacementTarget="{Binding ElementName=WrappedEndDatePickerRoot}"
+                                                   DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}"
+                                                   StaysOpen="False"
+                                                   AllowsTransparency="True">
+                                                <Border Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Panel}"
+                                                        BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                                                        BorderThickness="1"
+                                                        Padding="8">
+                                                    <StackPanel>
+                                                        <Grid Margin="0,0,0,7">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
+                                                            <Button Content="‹"
+                                                                    Command="{Binding MoveWrappedCalendarMonthCommand}"
+                                                                    CommandParameter="End:-1"
+                                                                    Style="{StaticResource WrappedCalendarNavButtonStyle}" />
+                                                            <TextBlock Grid.Column="1"
+                                                                       Text="{Binding WrappedEndCalendarTitle}"
+                                                                       HorizontalAlignment="Center"
+                                                                       VerticalAlignment="Center"
+                                                                       FontSize="12"
+                                                                       FontWeight="Bold"
+                                                                       Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                                                            <Button Grid.Column="2"
+                                                                    Content="›"
+                                                                    Command="{Binding MoveWrappedCalendarMonthCommand}"
+                                                                    CommandParameter="End:1"
+                                                                    Style="{StaticResource WrappedCalendarNavButtonStyle}" />
+                                                        </Grid>
+                                                        <UniformGrid Columns="7" Margin="0,0,0,4">
+                                                            <TextBlock Text="L" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="M" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="M" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="G" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="V" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="S" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                            <TextBlock Text="D" TextAlignment="Center" FontSize="10" FontWeight="Bold" Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                                        </UniformGrid>
+                                                        <ItemsControl ItemsSource="{Binding WrappedEndCalendarDays}">
+                                                            <ItemsControl.ItemsPanel>
+                                                                <ItemsPanelTemplate>
+                                                                    <UniformGrid Columns="7" />
+                                                                </ItemsPanelTemplate>
+                                                            </ItemsControl.ItemsPanel>
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <Button Content="{Binding DayText}"
+                                                                            Tag="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                            Command="{Binding DataContext.SelectWrappedCalendarDateCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                                                            CommandParameter="{Binding}"
+                                                                            Style="{StaticResource WrappedCalendarDayCellStyle}" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Popup>
+                                        </Grid>
+                                    </Grid>
+
+                                    <Grid Grid.Row="2" Margin="0,12,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{Binding WrappedCustomStatusText}"
+                                                   FontSize="12"
+                                                   VerticalAlignment="Center"
+                                                   TextWrapping="Wrap"
+                                                   Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Muted}" />
+                                        <Button Grid.Column="1"
+                                                Content="{Binding WrappedCustomCopyButtonText}"
+                                                Command="{Binding CopyWrappedCustomPeriodCommand}"
+                                                MinWidth="128"
+                                                Style="{StaticResource TopButtonStyle}" />
+                                    </Grid>
+                                </Grid>
+                            </Border>
 
                             <Border Padding="12"
                                     Margin="0,0,0,14"
@@ -1494,14 +1797,14 @@
                                                         CornerRadius="5" />
                                                 <Border Width="{Binding BarWidth}"
                                                         HorizontalAlignment="Left"
-                                                        Background="#00747A"
+                                                        Background="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
                                                         CornerRadius="5" />
                                                 <TextBlock Text="{Binding Wins}"
                                                            Margin="10,0,0,0"
                                                            VerticalAlignment="Center"
                                                            HorizontalAlignment="Left"
                                                            FontWeight="Bold"
-                                                           Foreground="White" />
+                                                           Foreground="{Binding DataContext.ThemeMode, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}" />
                                             </Grid>
                                         </Grid>
                                     </DataTemplate>
@@ -1600,7 +1903,7 @@
                         <Button Content="Chiudi"
                                 Command="{Binding CloseOverlayCommand}"
                                 Style="{StaticResource TopButtonStyle}" />
-                        <Button Content="Copia riepilogo"
+                        <Button Content="Copia mese"
                                 Command="{Binding CopyMonthlyRecapCommand}"
                                 Style="{StaticResource TopButtonStyle}" />
                         <Button Content="Apri Wrapped completo"
@@ -1647,9 +1950,9 @@
                                 Style="{StaticResource TopButtonStyle}" />
                         <Button Content="Resetta dati"
                                 Command="{Binding ConfirmResetCommand}"
-                                Background="#00747A"
-                                Foreground="White"
-                                BorderBrush="#00747A"
+                                Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                                Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
+                                BorderBrush="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
                                 Style="{StaticResource TopButtonStyle}" />
                     </WrapPanel>
                 </StackPanel>
@@ -1699,8 +2002,8 @@
                             Height="46"
                             FontSize="16"
                             FontWeight="Bold"
-                            Background="#00747A"
-                            Foreground="White"
+                            Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                            Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
                             BorderThickness="0"
                             Cursor="Hand"
                             Focusable="False" />
@@ -1745,8 +2048,8 @@
                             Margin="0,18,0,0"
                             FontSize="16"
                             FontWeight="Bold"
-                            Background="#00747A"
-                            Foreground="White"
+                            Background="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Accent}"
+                            Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=AccentForeground}"
                             BorderThickness="0"
                             Cursor="Hand"
                             Focusable="False" />

@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.5.18",
+    "title": "Riepilogo periodo",
+    "items": [
+      "Nel Wordle Wrapped arriva il nuovo Riepilogo periodo: puoi scegliere una data iniziale e finale e copiare il riepilogo di quell'intervallo.",
+      "La selezione date ora ha un calendario apribile, oltre alla possibilita' di scrivere la data a mano."
+    ]
+  },
+  {
     "version": "1.5.17",
     "title": "Streak di inizio mese",
     "items": [

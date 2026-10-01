@@ -98,6 +98,18 @@ public sealed class MainViewModel : ObservableObject
     private DateOnly _wrappedPeriod = new(DateTime.Today.Year, DateTime.Today.Month, 1);
     private string _wrappedPeriodLabel = string.Empty;
     private string _wrappedMonthlyScoresText = string.Empty;
+    private DateTime? _wrappedCustomStartDate = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateTime? _wrappedCustomEndDate = DateTime.Today;
+    private string _wrappedCustomStatusText = string.Empty;
+    private string _wrappedCustomSummaryText = string.Empty;
+    private string _wrappedCustomCopyButtonText = "Copia intervallo";
+    private int _wrappedCustomCopyVersion;
+    private bool _isWrappedStartCalendarOpen;
+    private bool _isWrappedEndCalendarOpen;
+    private DateOnly _wrappedStartCalendarMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private DateOnly _wrappedEndCalendarMonth = new(DateTime.Today.Year, DateTime.Today.Month, 1);
+    private string _wrappedStartCalendarTitle = string.Empty;
+    private string _wrappedEndCalendarTitle = string.Empty;
     private string _monthlyRecapTitle = string.Empty;
     private string _scoreLineText = string.Empty;
     private string _streakLineText = string.Empty;
@@ -214,6 +226,8 @@ public sealed class MainViewModel : ObservableObject
         ];
         WrappedWinRows = new ObservableCollection<WinDistributionRowViewModel>(
             Enumerable.Range(1, 6).Select(attempt => new WinDistributionRowViewModel(attempt)));
+        WrappedStartCalendarDays = [];
+        WrappedEndCalendarDays = [];
         HistoryRows = [];
 
         KeyCommand = new RelayCommand(parameter => HandleInput(parameter?.ToString() ?? string.Empty));
@@ -237,11 +251,15 @@ public sealed class MainViewModel : ObservableObject
         SetWrappedModeCommand = new RelayCommand(parameter => SetWrappedMode(parameter?.ToString() ?? "Mese"));
         PreviousWrappedPeriodCommand = new RelayCommand(_ => MoveWrappedPeriod(-1));
         NextWrappedPeriodCommand = new RelayCommand(_ => MoveWrappedPeriod(1));
+        CopyWrappedCustomPeriodCommand = new RelayCommand(_ => CopyWrappedCustomPeriod());
+        ToggleWrappedCalendarCommand = new RelayCommand(parameter => ToggleWrappedCalendar(parameter?.ToString()));
+        MoveWrappedCalendarMonthCommand = new RelayCommand(parameter => MoveWrappedCalendarMonth(parameter?.ToString()));
+        SelectWrappedCalendarDateCommand = new RelayCommand(parameter => SelectWrappedCalendarDate(parameter as WrappedCalendarDayViewModel));
         ShowResetConfirmCommand = new RelayCommand(_ => IsResetConfirmVisible = true);
         ConfirmResetCommand = new RelayCommand(_ => ResetGameData());
         CancelResetCommand = new RelayCommand(_ => IsResetConfirmVisible = false);
         OpenMonthlyRecapWrappedCommand = new RelayCommand(_ => OpenMonthlyRecapWrapped());
-        CopyMonthlyRecapCommand = new RelayCommand(_ => CopyMonthlyRecap());
+        CopyMonthlyRecapCommand = new RelayCommand(_ => CopyWrappedCurrentPeriod());
         SetHistoryFilterCommand = new RelayCommand(parameter =>
         {
             _historyFilter = parameter?.ToString() ?? "Tutte";
@@ -269,6 +287,7 @@ public sealed class MainViewModel : ObservableObject
         RefreshStatisticsView();
         RefreshHistoryView();
         RefreshWrappedView();
+        RefreshWrappedCalendars();
         CheckPendingMonthlyRecap();
         ShowChangelogIfNeeded(userSettingsExists);
 
@@ -294,6 +313,8 @@ public sealed class MainViewModel : ObservableObject
     public ObservableCollection<StatCardViewModel> MonthlyRecapCards { get; }
     public ObservableCollection<StatCardViewModel> WrappedTimeCards { get; }
     public ObservableCollection<WinDistributionRowViewModel> WrappedWinRows { get; }
+    public ObservableCollection<WrappedCalendarDayViewModel> WrappedStartCalendarDays { get; }
+    public ObservableCollection<WrappedCalendarDayViewModel> WrappedEndCalendarDays { get; }
     public ObservableCollection<HistoryEntryViewModel> HistoryRows { get; }
     public Statistics Statistics { get; }
     public string SplashSubtitle => string.IsNullOrWhiteSpace(PlayerName)
@@ -314,6 +335,10 @@ public sealed class MainViewModel : ObservableObject
     public ICommand SetWrappedModeCommand { get; }
     public ICommand PreviousWrappedPeriodCommand { get; }
     public ICommand NextWrappedPeriodCommand { get; }
+    public ICommand CopyWrappedCustomPeriodCommand { get; }
+    public ICommand ToggleWrappedCalendarCommand { get; }
+    public ICommand MoveWrappedCalendarMonthCommand { get; }
+    public ICommand SelectWrappedCalendarDateCommand { get; }
     public ICommand ShowResetConfirmCommand { get; }
     public ICommand ConfirmResetCommand { get; }
     public ICommand CancelResetCommand { get; }
@@ -793,6 +818,90 @@ public sealed class MainViewModel : ObservableObject
         get => _wrappedMonthlyScoresText;
         set => SetProperty(ref _wrappedMonthlyScoresText, value);
     }
+
+    public DateTime? WrappedCustomStartDate
+    {
+        get => _wrappedCustomStartDate;
+        set
+        {
+            if (SetProperty(ref _wrappedCustomStartDate, value))
+            {
+                RefreshWrappedCustomSummary();
+                RefreshWrappedCalendars();
+                OnPropertyChanged(nameof(WrappedCustomStartText));
+            }
+        }
+    }
+
+    public DateTime? WrappedCustomEndDate
+    {
+        get => _wrappedCustomEndDate;
+        set
+        {
+            if (SetProperty(ref _wrappedCustomEndDate, value))
+            {
+                RefreshWrappedCustomSummary();
+                RefreshWrappedCalendars();
+                OnPropertyChanged(nameof(WrappedCustomEndText));
+            }
+        }
+    }
+
+    public string WrappedCustomStartText
+    {
+        get => FormatDatePickerText(WrappedCustomStartDate);
+        set => UpdateWrappedCustomDate(value, isStart: true);
+    }
+
+    public string WrappedCustomEndText
+    {
+        get => FormatDatePickerText(WrappedCustomEndDate);
+        set => UpdateWrappedCustomDate(value, isStart: false);
+    }
+
+    public bool IsWrappedStartCalendarOpen
+    {
+        get => _isWrappedStartCalendarOpen;
+        set => SetProperty(ref _isWrappedStartCalendarOpen, value);
+    }
+
+    public bool IsWrappedEndCalendarOpen
+    {
+        get => _isWrappedEndCalendarOpen;
+        set => SetProperty(ref _isWrappedEndCalendarOpen, value);
+    }
+
+    public string WrappedStartCalendarTitle
+    {
+        get => _wrappedStartCalendarTitle;
+        set => SetProperty(ref _wrappedStartCalendarTitle, value);
+    }
+
+    public string WrappedEndCalendarTitle
+    {
+        get => _wrappedEndCalendarTitle;
+        set => SetProperty(ref _wrappedEndCalendarTitle, value);
+    }
+
+    public string WrappedCustomStatusText
+    {
+        get => _wrappedCustomStatusText;
+        set => SetProperty(ref _wrappedCustomStatusText, value);
+    }
+
+    public string WrappedCustomSummaryText
+    {
+        get => _wrappedCustomSummaryText;
+        set => SetProperty(ref _wrappedCustomSummaryText, value);
+    }
+
+    public string WrappedCustomCopyButtonText
+    {
+        get => _wrappedCustomCopyButtonText;
+        set => SetProperty(ref _wrappedCustomCopyButtonText, value);
+    }
+
+    public string WrappedCopyCurrentPeriodText => _wrappedMode == "Anno" ? "Copia anno" : "Copia mese";
 
     public string MonthlyRecapTitle
     {
@@ -2408,6 +2517,7 @@ public sealed class MainViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsWrappedMonthlyActive));
         OnPropertyChanged(nameof(IsWrappedYearlyActive));
+        OnPropertyChanged(nameof(WrappedCopyCurrentPeriodText));
     }
 
     private void RefreshWrappedView()
@@ -2456,6 +2566,8 @@ public sealed class MainViewModel : ObservableObject
             WrappedWinRows[i].Wins = count;
             WrappedWinRows[i].BarWidth = count == 0 ? 18 : Math.Max(34, count * 220.0 / maxWrappedWins);
         }
+
+        RefreshWrappedCustomSummary();
 
         var timedEntries = entries
             .Where(entry => entry.DurationSeconds is not null)
@@ -2547,13 +2659,176 @@ public sealed class MainViewModel : ObservableObject
         IsWrappedVisible = true;
     }
 
-    private void CopyMonthlyRecap()
+    private void CopyWrappedCurrentPeriod()
     {
+        if (_wrappedMode == "Anno")
+        {
+            var yearStart = new DateOnly(_wrappedPeriod.Year, 1, 1);
+            CopyText(BuildPeriodRecapShareText(yearStart, yearStart.AddYears(1).AddDays(-1), _wrappedPeriod.Year.ToString(CultureInfo.InvariantCulture)));
+            return;
+        }
+
         var recapMonth = IsMonthlyRecapVisible && ParseMonthKey(Statistics.LastMonthlyRecapShown) is { } pendingMonth
             ? pendingMonth
             : new DateOnly(_wrappedPeriod.Year, _wrappedPeriod.Month, 1);
-
         CopyText(BuildMonthlyRecapShareText(recapMonth));
+    }
+
+    private void ToggleWrappedCalendar(string? target)
+    {
+        var isEnd = string.Equals(target, "End", StringComparison.OrdinalIgnoreCase);
+        if (isEnd)
+        {
+            _wrappedEndCalendarMonth = FirstDayOfMonth(WrappedCustomEndDate ?? DateTime.Today);
+            RefreshWrappedEndCalendar();
+            IsWrappedStartCalendarOpen = false;
+            IsWrappedEndCalendarOpen = !IsWrappedEndCalendarOpen;
+            return;
+        }
+
+        _wrappedStartCalendarMonth = FirstDayOfMonth(WrappedCustomStartDate ?? DateTime.Today);
+        RefreshWrappedStartCalendar();
+        IsWrappedEndCalendarOpen = false;
+        IsWrappedStartCalendarOpen = !IsWrappedStartCalendarOpen;
+    }
+
+    private void MoveWrappedCalendarMonth(string? parameter)
+    {
+        var parts = (parameter ?? string.Empty).Split(':', StringSplitOptions.RemoveEmptyEntries);
+        if (parts.Length != 2 || !int.TryParse(parts[1], NumberStyles.Integer, CultureInfo.InvariantCulture, out var direction))
+        {
+            return;
+        }
+
+        if (string.Equals(parts[0], "End", StringComparison.OrdinalIgnoreCase))
+        {
+            _wrappedEndCalendarMonth = _wrappedEndCalendarMonth.AddMonths(direction);
+            RefreshWrappedEndCalendar();
+            return;
+        }
+
+        _wrappedStartCalendarMonth = _wrappedStartCalendarMonth.AddMonths(direction);
+        RefreshWrappedStartCalendar();
+    }
+
+    private void SelectWrappedCalendarDate(WrappedCalendarDayViewModel? day)
+    {
+        if (day is null)
+        {
+            return;
+        }
+
+        if (string.Equals(day.Target, "End", StringComparison.OrdinalIgnoreCase))
+        {
+            WrappedCustomEndDate = day.Date;
+            IsWrappedEndCalendarOpen = false;
+            return;
+        }
+
+        WrappedCustomStartDate = day.Date;
+        IsWrappedStartCalendarOpen = false;
+    }
+
+    private void RefreshWrappedCalendars()
+    {
+        RefreshWrappedStartCalendar();
+        RefreshWrappedEndCalendar();
+    }
+
+    private void RefreshWrappedStartCalendar()
+    {
+        BuildWrappedCalendar(
+            WrappedStartCalendarDays,
+            _wrappedStartCalendarMonth,
+            WrappedCustomStartDate,
+            "Start",
+            title => WrappedStartCalendarTitle = title);
+    }
+
+    private void RefreshWrappedEndCalendar()
+    {
+        BuildWrappedCalendar(
+            WrappedEndCalendarDays,
+            _wrappedEndCalendarMonth,
+            WrappedCustomEndDate,
+            "End",
+            title => WrappedEndCalendarTitle = title);
+    }
+
+    private static void BuildWrappedCalendar(
+        ObservableCollection<WrappedCalendarDayViewModel> days,
+        DateOnly displayMonth,
+        DateTime? selectedDate,
+        string target,
+        Action<string> setTitle)
+    {
+        var culture = CultureInfo.GetCultureInfo("it-IT");
+        var firstOfMonth = new DateOnly(displayMonth.Year, displayMonth.Month, 1);
+        setTitle(culture.TextInfo.ToTitleCase(firstOfMonth.ToString("MMMM yyyy", culture)));
+
+        var mondayOffset = ((int)firstOfMonth.DayOfWeek + 6) % 7;
+        var firstVisibleDay = firstOfMonth.AddDays(-mondayOffset);
+        days.Clear();
+        for (var index = 0; index < 42; index++)
+        {
+            days.Add(new WrappedCalendarDayViewModel(target, firstVisibleDay.AddDays(index), firstOfMonth, selectedDate));
+        }
+    }
+
+    private void UpdateWrappedCustomDate(string? value, bool isStart)
+    {
+        var culture = CultureInfo.GetCultureInfo("it-IT");
+        var formats = new[] { "d/M/yyyy", "dd/MM/yyyy", "d/MM/yyyy", "dd/M/yyyy" };
+        if (!DateTime.TryParseExact(value?.Trim(), formats, culture, DateTimeStyles.None, out var parsed))
+        {
+            WrappedCustomStatusText = isStart ? "Data iniziale non valida." : "Data finale non valida.";
+            return;
+        }
+
+        if (isStart)
+        {
+            WrappedCustomStartDate = parsed;
+            return;
+        }
+
+        WrappedCustomEndDate = parsed;
+    }
+
+    private static string FormatDatePickerText(DateTime? value)
+    {
+        return value?.ToString("dd/MM/yyyy", CultureInfo.GetCultureInfo("it-IT")) ?? string.Empty;
+    }
+
+    private static DateOnly FirstDayOfMonth(DateTime value)
+    {
+        return new DateOnly(value.Year, value.Month, 1);
+    }
+
+    private async void CopyWrappedCustomPeriod()
+    {
+        if (WrappedCustomStartDate is null || WrappedCustomEndDate is null)
+        {
+            WrappedCustomStatusText = "Scegli una data iniziale e una finale.";
+            return;
+        }
+
+        var start = DateOnly.FromDateTime(WrappedCustomStartDate.Value);
+        var end = DateOnly.FromDateTime(WrappedCustomEndDate.Value);
+        if (end < start)
+        {
+            WrappedCustomStatusText = "La data finale deve essere dopo quella iniziale.";
+            return;
+        }
+
+        CopyText(BuildPeriodRecapShareText(start, end), showToast: false);
+        WrappedCustomStatusText = FormatPeriodLabel(start, end);
+        var version = ++_wrappedCustomCopyVersion;
+        WrappedCustomCopyButtonText = "✓ Copiato!";
+        await Task.Delay(1300);
+        if (version == _wrappedCustomCopyVersion)
+        {
+            WrappedCustomCopyButtonText = "Copia intervallo";
+        }
     }
 
     private string BuildMonthlyRecapShareText(DateOnly month)
@@ -2562,6 +2837,17 @@ public sealed class MainViewModel : ObservableObject
         var start = new DateOnly(month.Year, month.Month, 1);
         var end = start.AddMonths(1);
         var label = culture.TextInfo.ToTitleCase(start.ToString("MMMM yyyy", culture));
+        return BuildPeriodRecapShareText(start, end.AddDays(-1), label);
+    }
+
+    private string BuildPeriodRecapShareText(DateOnly start, DateOnly endInclusive)
+    {
+        return BuildPeriodRecapShareText(start, endInclusive, FormatPeriodLabel(start, endInclusive));
+    }
+
+    private string BuildPeriodRecapShareText(DateOnly start, DateOnly endInclusive, string label)
+    {
+        var end = endInclusive.AddDays(1);
         var entries = Statistics.History
             .Where(IsCompetitiveEntry)
             .Select(entry => new { Entry = entry, Date = TryGetHistoryDate(entry.Date) })
@@ -2602,6 +2888,47 @@ public sealed class MainViewModel : ObservableObject
         }
 
         return builder.ToString().TrimEnd();
+    }
+
+    private void RefreshWrappedCustomSummary()
+    {
+        if (WrappedCustomStartDate is null || WrappedCustomEndDate is null)
+        {
+            WrappedCustomSummaryText = "Scegli un intervallo.";
+            return;
+        }
+
+        var start = DateOnly.FromDateTime(WrappedCustomStartDate.Value);
+        var end = DateOnly.FromDateTime(WrappedCustomEndDate.Value);
+        if (end < start)
+        {
+            WrappedCustomSummaryText = "Intervallo non valido.";
+            return;
+        }
+
+        var days = end.DayNumber - start.DayNumber + 1;
+        var games = Statistics.History
+            .Where(IsCompetitiveEntry)
+            .Select(entry => TryGetHistoryDate(entry.Date))
+            .Count(date => date is not null && date.Value >= start && date.Value <= end);
+        WrappedCustomSummaryText = $"{days} {FormatDayWord(days)} · {games} {(games == 1 ? "partita" : "partite")}";
+    }
+
+    private static string FormatPeriodLabel(DateOnly start, DateOnly end)
+    {
+        var culture = CultureInfo.GetCultureInfo("it-IT");
+        if (start == end)
+        {
+            return culture.TextInfo.ToTitleCase(start.ToString("d MMMM yyyy", culture));
+        }
+
+        if (start.Year == end.Year && start.Month == end.Month)
+        {
+            var month = culture.TextInfo.ToTitleCase(start.ToString("MMMM", culture));
+            return $"{start.Day}-{end.Day} {month} {start.Year}";
+        }
+
+        return $"{start:dd/MM/yyyy}-{end:dd/MM/yyyy}";
     }
 
     private void ResetGameData()
@@ -2875,7 +3202,7 @@ public sealed class MainViewModel : ObservableObject
         CopyText(BuildShareText(entry));
     }
 
-    private void CopyText(string? text)
+    private void CopyText(string? text, bool showToast = true)
     {
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -2894,7 +3221,7 @@ public sealed class MainViewModel : ObservableObject
             Application.Current.Dispatcher.BeginInvoke(() =>
             {
                 _isClipboardCopyRunning = false;
-                if (copied)
+                if (copied && showToast)
                 {
                     ShowToast("Risultato copiato.");
                 }
@@ -3691,6 +4018,24 @@ public sealed class MainViewModel : ObservableObject
 
         return settings;
     }
+}
+
+public sealed class WrappedCalendarDayViewModel
+{
+    public WrappedCalendarDayViewModel(string target, DateOnly date, DateOnly displayMonth, DateTime? selectedDate)
+    {
+        Target = target;
+        Date = date.ToDateTime(TimeOnly.MinValue);
+        DayText = date.Day.ToString(CultureInfo.InvariantCulture);
+        IsCurrentMonth = date.Year == displayMonth.Year && date.Month == displayMonth.Month;
+        IsSelected = selectedDate is not null && DateOnly.FromDateTime(selectedDate.Value) == date;
+    }
+
+    public string Target { get; }
+    public DateTime Date { get; }
+    public string DayText { get; }
+    public bool IsCurrentMonth { get; }
+    public bool IsSelected { get; }
 }
 
 
