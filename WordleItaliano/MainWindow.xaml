@@ -1133,10 +1133,14 @@
                                        FontWeight="Bold"
                                        Margin="0,0,0,8"
                                        Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
-                            <TextBlock Text="{Binding UpdateReleaseNotesText}"
-                                       TextWrapping="Wrap"
-                                       LineHeight="19"
-                                       Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                            <ScrollViewer MaxHeight="260"
+                                          HorizontalScrollBarVisibility="Disabled"
+                                          VerticalScrollBarVisibility="Auto">
+                                <TextBlock Text="{Binding UpdateReleaseNotesText}"
+                                           TextWrapping="Wrap"
+                                           LineHeight="19"
+                                           Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
+                            </ScrollViewer>
                         </StackPanel>
                     </Border>
 

@@ -1,5 +1,6 @@
 using System.Net.Http;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using Velopack;
 using Velopack.Exceptions;
@@ -68,6 +69,52 @@ public sealed class AppUpdateService
     {
         try
         {
+            var currentVersionText = TrimVersionMetadata(CurrentVersionText);
+            if (!SemanticVersion.TryParse(currentVersionText, out var currentVersion) ||
+                !SemanticVersion.TryParse(version, out var targetVersion))
+            {
+                return await GetSingleReleaseNotesAsync(version);
+            }
+
+            var releaseNotes = await GetReleaseNotesEntriesAsync();
+            var relevantReleaseNotes = releaseNotes
+                .Where(entry => entry.Version.CompareTo(currentVersion) > 0 &&
+                                entry.Version.CompareTo(targetVersion) <= 0)
+                .OrderBy(entry => entry.Version)
+                .ToArray();
+
+            if (relevantReleaseNotes.Length == 0)
+            {
+                return await GetSingleReleaseNotesAsync(version);
+            }
+
+            var builder = new StringBuilder();
+            foreach (var entry in relevantReleaseNotes)
+            {
+                if (builder.Length > 0)
+                {
+                    builder.AppendLine();
+                    builder.AppendLine();
+                }
+
+                builder.AppendLine(entry.DisplayVersion);
+                builder.Append(string.IsNullOrWhiteSpace(entry.Notes)
+                    ? "Nessuna nota disponibile."
+                    : entry.Notes);
+            }
+
+            return builder.ToString().Trim();
+        }
+        catch
+        {
+            return await GetSingleReleaseNotesAsync(version);
+        }
+    }
+
+    private async Task<string> GetSingleReleaseNotesAsync(string version)
+    {
+        try
+        {
             if (!TryGetGitHubRepository(_repositoryUrl, out var owner, out var repository))
             {
                 return string.Empty;
@@ -78,8 +125,9 @@ public sealed class AppUpdateService
                 : $"v{version}";
             using var request = new HttpRequestMessage(
                 HttpMethod.Get,
-                $"https://api.github.com/repos/{owner}/{repository}/releases/tags/{tag}");
+                $"https://api.github.com/repos/{owner}/{repository}/releases/tags/{Uri.EscapeDataString(tag)}");
             request.Headers.UserAgent.ParseAdd("WordleItaliano");
+            request.Headers.Accept.ParseAdd("application/vnd.github+json");
 
             using var response = await HttpClient.SendAsync(request);
             if (!response.IsSuccessStatusCode)
@@ -100,6 +148,81 @@ public sealed class AppUpdateService
         {
             return string.Empty;
         }
+    }
+
+    private async Task<IReadOnlyList<ReleaseNotesEntry>> GetReleaseNotesEntriesAsync()
+    {
+        if (!TryGetGitHubRepository(_repositoryUrl, out var owner, out var repository))
+        {
+            return [];
+        }
+
+        var entries = new List<ReleaseNotesEntry>();
+        for (var page = 1; page <= 5; page++)
+        {
+            using var request = new HttpRequestMessage(
+                HttpMethod.Get,
+                $"https://api.github.com/repos/{owner}/{repository}/releases?per_page=100&page={page}");
+            request.Headers.UserAgent.ParseAdd("WordleItaliano");
+            request.Headers.Accept.ParseAdd("application/vnd.github+json");
+
+            using var response = await HttpClient.SendAsync(request);
+            if (!response.IsSuccessStatusCode)
+            {
+                return entries;
+            }
+
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var document = await JsonDocument.ParseAsync(stream);
+            if (document.RootElement.ValueKind != JsonValueKind.Array)
+            {
+                return entries;
+            }
+
+            var pageCount = 0;
+            foreach (var release in document.RootElement.EnumerateArray())
+            {
+                pageCount++;
+                if (release.TryGetProperty("draft", out var draftElement) &&
+                    draftElement.ValueKind == JsonValueKind.True)
+                {
+                    continue;
+                }
+
+                if (release.TryGetProperty("prerelease", out var prereleaseElement) &&
+                    prereleaseElement.ValueKind == JsonValueKind.True)
+                {
+                    continue;
+                }
+
+                var tag = release.TryGetProperty("tag_name", out var tagElement)
+                    ? tagElement.GetString()
+                    : null;
+                if (string.IsNullOrWhiteSpace(tag) ||
+                    !SemanticVersion.TryParse(tag, out var semanticVersion))
+                {
+                    continue;
+                }
+
+                var body = release.TryGetProperty("body", out var bodyElement)
+                    ? bodyElement.GetString()
+                    : null;
+                var displayVersion = tag.StartsWith("v", StringComparison.OrdinalIgnoreCase)
+                    ? tag
+                    : $"v{tag}";
+                entries.Add(new ReleaseNotesEntry(
+                    semanticVersion,
+                    displayVersion,
+                    CleanReleaseNotes(body)));
+            }
+
+            if (pageCount < 100)
+            {
+                break;
+            }
+        }
+
+        return entries;
     }
 
     private static string GetAssemblyVersionText()
@@ -161,6 +284,86 @@ public sealed class AppUpdateService
             .ToList();
 
         return string.Join(Environment.NewLine, lines);
+    }
+
+    private sealed record ReleaseNotesEntry(SemanticVersion Version, string DisplayVersion, string Notes);
+
+    private sealed record SemanticVersion(int Major, int Minor, int Patch, int Revision) : IComparable<SemanticVersion>
+    {
+        public static bool TryParse(string? value, out SemanticVersion version)
+        {
+            version = new SemanticVersion(0, 0, 0, 0);
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return false;
+            }
+
+            var normalized = value.Trim();
+            if (normalized.StartsWith("v", StringComparison.OrdinalIgnoreCase))
+            {
+                normalized = normalized[1..];
+            }
+
+            var metadataIndex = normalized.IndexOf('+', StringComparison.Ordinal);
+            if (metadataIndex >= 0)
+            {
+                normalized = normalized[..metadataIndex];
+            }
+
+            var prereleaseIndex = normalized.IndexOf('-', StringComparison.Ordinal);
+            if (prereleaseIndex >= 0)
+            {
+                normalized = normalized[..prereleaseIndex];
+            }
+
+            var parts = normalized.Split('.', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length is < 1 or > 4)
+            {
+                return false;
+            }
+
+            var numbers = new[] { 0, 0, 0, 0 };
+            for (var index = 0; index < parts.Length; index++)
+            {
+                if (!int.TryParse(parts[index], out var number) || number < 0)
+                {
+                    return false;
+                }
+
+                numbers[index] = number;
+            }
+
+            version = new SemanticVersion(numbers[0], numbers[1], numbers[2], numbers[3]);
+            return true;
+        }
+
+        public int CompareTo(SemanticVersion? other)
+        {
+            if (other is null)
+            {
+                return 1;
+            }
+
+            var majorComparison = Major.CompareTo(other.Major);
+            if (majorComparison != 0)
+            {
+                return majorComparison;
+            }
+
+            var minorComparison = Minor.CompareTo(other.Minor);
+            if (minorComparison != 0)
+            {
+                return minorComparison;
+            }
+
+            var patchComparison = Patch.CompareTo(other.Patch);
+            if (patchComparison != 0)
+            {
+                return patchComparison;
+            }
+
+            return Revision.CompareTo(other.Revision);
+        }
     }
 }
 
