@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.5.20",
+    "title": "Aggiornamenti dopo mezzanotte",
+    "items": [
+      "Se Wordle resta aperto durante la notte, al nuovo giorno controlla anche se ci sono aggiornamenti disponibili.",
+      "Piccoli miglioramenti generali."
+    ]
+  },
+  {
     "version": "1.5.19",
     "title": "Patch Notes piu' complete",
     "items": [

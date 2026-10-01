@@ -25,13 +25,21 @@ public partial class MainWindow : Window
             viewModel.VictoryAnimationRequested += (_, row) => CelebrateRow(row);
             viewModel.PerfectShotAnimationRequested += (_, row) => CelebratePerfectShot(row);
             viewModel.DefeatAnimationRequested += (_, row) => DefeatPulseRow(row);
-            Activated += (_, _) => viewModel.EnsureCurrentGame();
-            _dateTimer.Tick += (_, _) => viewModel.EnsureCurrentGame();
+            Activated += (_, _) => EnsureCurrentGameAndCheckUpdates(viewModel);
+            _dateTimer.Tick += (_, _) => EnsureCurrentGameAndCheckUpdates(viewModel);
             _dateTimer.Start();
             _timerRefresh.Tick += (_, _) => viewModel.TickTimer();
             _timerRefresh.Start();
             Closing += (_, _) => viewModel.PersistActiveGameTime();
             viewModel.EnsureCurrentGame();
+        }
+    }
+
+    private static void EnsureCurrentGameAndCheckUpdates(MainViewModel viewModel)
+    {
+        if (viewModel.EnsureCurrentGame())
+        {
+            _ = viewModel.CheckForUpdatesAfterDateChangeAsync();
         }
     }
 

@@ -3389,6 +3389,16 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
+    public async Task CheckForUpdatesAfterDateChangeAsync()
+    {
+        if (IsUpdateBusy || IsUpdateDialogVisible)
+        {
+            return;
+        }
+
+        await CheckForUpdatesOnStartupAsync();
+    }
+
     private async Task CheckForUpdatesManuallyAsync()
     {
         if (IsUpdateBusy)
