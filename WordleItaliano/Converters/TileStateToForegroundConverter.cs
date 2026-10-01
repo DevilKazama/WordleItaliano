@@ -1,7 +1,7 @@
 using System.Globalization;
 using System.Windows.Data;
-using System.Windows.Media;
 using WordleItaliano.Models;
+using WordleItaliano.Theme;
 
 namespace WordleItaliano.Converters;
 
@@ -26,17 +26,7 @@ public sealed class TileStateToForegroundConverter : IValueConverter, IMultiValu
 
     private static object ConvertCore(TileState state, string theme)
     {
-        if (theme == "Original" && state is TileState.Empty or TileState.Filled)
-        {
-            return new SolidColorBrush(Color.FromRgb(18, 18, 19));
-        }
-
-        if (theme == "IbpLight" && state is TileState.Empty or TileState.Filled)
-        {
-            return new SolidColorBrush(Color.FromRgb(18, 32, 36));
-        }
-
-        return Brushes.White;
+        return ThemePalette.For(theme).GetTileForegroundBrush(state);
     }
 
     private static (TileState State, string Theme) ReadStateAndTheme(object value, object? parameter)
@@ -44,11 +34,11 @@ public sealed class TileStateToForegroundConverter : IValueConverter, IMultiValu
         if (value is object[] values)
         {
             var state = values.ElementAtOrDefault(0) is TileState multiState ? multiState : TileState.Empty;
-            var theme = values.ElementAtOrDefault(1)?.ToString() ?? "IbpDark";
+            var theme = values.ElementAtOrDefault(1)?.ToString() ?? ThemeModes.IbpDark;
             return (state, theme);
         }
 
         var singleState = value is TileState tileState ? tileState : TileState.Empty;
-        return (singleState, parameter?.ToString() ?? "IbpDark");
+        return (singleState, parameter?.ToString() ?? ThemeModes.IbpDark);
     }
 }

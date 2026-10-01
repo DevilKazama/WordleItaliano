@@ -9,6 +9,7 @@ using System.Windows.Input;
 using Velopack;
 using WordleItaliano.Models;
 using WordleItaliano.Services;
+using WordleItaliano.Theme;
 
 namespace WordleItaliano.ViewModels;
 
@@ -48,7 +49,7 @@ public sealed class MainViewModel : ObservableObject
     private bool _isInfiniteActive;
     private bool _isBonusUnlocked;
     private bool _isBonusPromptVisible;
-    private string _themeMode = "IbpDark";
+    private string _themeMode = ThemeModes.IbpDark;
     private bool _isSplashVisible = true;
     private bool _isVirtualKeyboardVisible = true;
     private bool _isStatisticsVisible;
@@ -508,10 +509,10 @@ public sealed class MainViewModel : ObservableObject
         }
     }
 
-    public bool IsDarkTheme => ThemeMode == "IbpDark";
-    public bool IsIbpDarkThemeActive => ThemeMode == "IbpDark";
-    public bool IsIbpLightThemeActive => ThemeMode == "IbpLight";
-    public bool IsOriginalThemeActive => ThemeMode == "Original";
+    public bool IsDarkTheme => ThemeMode == ThemeModes.IbpDark;
+    public bool IsIbpDarkThemeActive => ThemeMode == ThemeModes.IbpDark;
+    public bool IsIbpLightThemeActive => ThemeMode == ThemeModes.IbpLight;
+    public bool IsOriginalThemeActive => ThemeMode == ThemeModes.Original;
 
     public bool IsSplashVisible
     {
@@ -3303,12 +3304,7 @@ public sealed class MainViewModel : ObservableObject
 
     private static string NormalizeThemeMode(string? themeMode)
     {
-        return themeMode switch
-        {
-            "IbpLight" => "IbpLight",
-            "Original" => "Original",
-            _ => "IbpDark"
-        };
+        return ThemeModes.Normalize(themeMode);
     }
 
     private void ShowChangelogIfNeeded(bool userSettingsExists)
