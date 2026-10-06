@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.5.23",
+    "title": "Wrapped e Storico Bonus",
+    "items": [
+      "Corretto il riepilogo Wrapped: cambiando l’intervallo di date, le statistiche visualizzate si aggiornano subito e corrispondono al riepilogo copiato.",
+      "Aggiunto un filtro nello storico delle partite Bonus: ora puoi visualizzare tutte le parole oppure solo quelle da 5, 6 o 7 lettere."
+    ]
+  },
+  {
     "version": "1.5.22",
     "title": "Testi più chiari e coerenti",
     "items": [

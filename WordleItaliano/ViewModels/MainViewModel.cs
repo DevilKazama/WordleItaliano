@@ -82,10 +82,12 @@ public sealed class MainViewModel : ObservableObject
     private bool _isToastVisible;
     private int _toastVersion;
     private string _historyFilter = "Tutte";
+    private int _historyBonusLength;
     private string _historyFilterLabel = "Filtro: Tutte";
     private string _historyEmptyMessage = string.Empty;
     private bool _isHistoryEmptyVisible;
     private bool _isWrappedVisible;
+    private bool _wrappedUsesCustomPeriod;
     private bool _isMonthlyRecapVisible;
     private bool _isResetConfirmVisible;
     private bool _isSettingsVisible;
@@ -264,7 +266,15 @@ public sealed class MainViewModel : ObservableObject
         SetHistoryFilterCommand = new RelayCommand(parameter =>
         {
             _historyFilter = parameter?.ToString() ?? "Tutte";
-            HistoryFilterLabel = $"Filtro: {_historyFilter}";
+            _historyBonusLength = 0;
+            RefreshHistoryFilterStates();
+            RefreshHistoryView();
+        });
+        SetHistoryBonusLengthCommand = new RelayCommand(parameter =>
+        {
+            if (_historyFilter != "Bonus") return;
+            _historyBonusLength = int.TryParse(parameter?.ToString(), out var length) && length is >= 5 and <= 7
+                ? length : 0;
             RefreshHistoryFilterStates();
             RefreshHistoryView();
         });
@@ -346,6 +356,7 @@ public sealed class MainViewModel : ObservableObject
     public ICommand OpenMonthlyRecapWrappedCommand { get; }
     public ICommand CopyMonthlyRecapCommand { get; }
     public ICommand SetHistoryFilterCommand { get; }
+    public ICommand SetHistoryBonusLengthCommand { get; }
     public ICommand CopyCurrentResultCommand { get; }
     public ICommand CopyHistoryResultCommand { get; }
     public ICommand CloseOverlayCommand { get; }
@@ -791,6 +802,10 @@ public sealed class MainViewModel : ObservableObject
     public bool IsHistoryFilterAllActive => _historyFilter == "Tutte";
     public bool IsHistoryFilterDailyActive => _historyFilter == "Giornaliere";
     public bool IsHistoryFilterBonusActive => _historyFilter == "Bonus";
+    public bool IsHistoryBonusLengthAllActive => _historyBonusLength == 0;
+    public bool IsHistoryBonusLengthFiveActive => _historyBonusLength == 5;
+    public bool IsHistoryBonusLengthSixActive => _historyBonusLength == 6;
+    public bool IsHistoryBonusLengthSevenActive => _historyBonusLength == 7;
     public bool IsHistoryFilterInfiniteActive => _historyFilter == "Infinite";
     public bool IsHistoryFilterWonActive => _historyFilter == "Vinte";
     public bool IsHistoryFilterLostActive => _historyFilter == "Perse";
@@ -827,7 +842,8 @@ public sealed class MainViewModel : ObservableObject
         {
             if (SetProperty(ref _wrappedCustomStartDate, value))
             {
-                RefreshWrappedCustomSummary();
+                _wrappedUsesCustomPeriod = true;
+                RefreshWrappedView();
                 RefreshWrappedCalendars();
                 OnPropertyChanged(nameof(WrappedCustomStartText));
             }
@@ -841,7 +857,8 @@ public sealed class MainViewModel : ObservableObject
         {
             if (SetProperty(ref _wrappedCustomEndDate, value))
             {
-                RefreshWrappedCustomSummary();
+                _wrappedUsesCustomPeriod = true;
+                RefreshWrappedView();
                 RefreshWrappedCalendars();
                 OnPropertyChanged(nameof(WrappedCustomEndText));
             }
@@ -2498,6 +2515,7 @@ public sealed class MainViewModel : ObservableObject
 
     private void SetWrappedMode(string mode)
     {
+        _wrappedUsesCustomPeriod = false;
         _wrappedMode = mode == "Anno" ? "Anno" : "Mese";
         _wrappedPeriod = _wrappedMode == "Anno"
             ? new DateOnly(_wrappedPeriod.Year, 1, 1)
@@ -2508,6 +2526,7 @@ public sealed class MainViewModel : ObservableObject
 
     private void MoveWrappedPeriod(int direction)
     {
+        _wrappedUsesCustomPeriod = false;
         _wrappedPeriod = ClampWrappedPeriod(_wrappedMode == "Anno"
             ? _wrappedPeriod.AddYears(direction)
             : _wrappedPeriod.AddMonths(direction));
@@ -2533,6 +2552,17 @@ public sealed class MainViewModel : ObservableObject
             ? start.Year.ToString(CultureInfo.InvariantCulture)
             : CultureInfo.GetCultureInfo("it-IT").TextInfo.ToTitleCase(start.ToString("MMMM yyyy", CultureInfo.GetCultureInfo("it-IT")));
 
+        var hasCustomPeriod = _wrappedUsesCustomPeriod &&
+            WrappedCustomStartDate is not null && WrappedCustomEndDate is not null &&
+            WrappedCustomEndDate.Value.Date >= WrappedCustomStartDate.Value.Date;
+        if (hasCustomPeriod)
+        {
+            start = DateOnly.FromDateTime(WrappedCustomStartDate!.Value);
+            var endInclusive = DateOnly.FromDateTime(WrappedCustomEndDate!.Value);
+            end = endInclusive.AddDays(1);
+            WrappedPeriodLabel = FormatPeriodLabel(start, endInclusive);
+        }
+
         var entries = Statistics.History
             .Where(IsCompetitiveEntry)
             .Select(entry => new { Entry = entry, Date = TryGetHistoryDate(entry.Date) })
@@ -2557,7 +2587,7 @@ public sealed class MainViewModel : ObservableObject
         WrappedStatCards[6].Value = bestStreak.ToString(CultureInfo.InvariantCulture);
         WrappedStatCards[7].Value = quickWins.ToString(CultureInfo.InvariantCulture);
         WrappedStatCards[8].Value = played == 0 ? "0" : (totalScore * 1.0 / played).ToString("0.0", CultureInfo.InvariantCulture);
-        WrappedMonthlyScoresText = _wrappedMode == "Anno" ? BuildYearlyMonthlyScoreText(start) : string.Empty;
+        WrappedMonthlyScoresText = _wrappedMode == "Anno" && !hasCustomPeriod ? BuildYearlyMonthlyScoreText(start) : string.Empty;
 
         var maxWrappedWins = Math.Max(1, wonAttempts.GroupBy(attempt => attempt).Select(group => group.Count()).DefaultIfEmpty(0).Max());
         for (var i = 0; i < WrappedWinRows.Count; i++)
@@ -2647,6 +2677,7 @@ public sealed class MainViewModel : ObservableObject
 
     private void OpenMonthlyRecapWrapped()
     {
+        _wrappedUsesCustomPeriod = false;
         var recapMonth = ParseMonthKey(Statistics.LastMonthlyRecapShown);
         if (recapMonth is not null)
         {
@@ -3091,6 +3122,9 @@ public sealed class MainViewModel : ObservableObject
 
     private void RefreshHistoryView()
     {
+        HistoryFilterLabel = _historyFilter == "Bonus" && _historyBonusLength != 0
+            ? $"Filtro: Bonus · {_historyBonusLength} lettere"
+            : $"Filtro: {_historyFilter}";
         HistoryRows.Clear();
         foreach (var entry in Statistics.History
                      .Where(item => item.Won || item.Guesses.Count >= 6)
@@ -3169,7 +3203,7 @@ public sealed class MainViewModel : ObservableObject
         return _historyFilter switch
         {
             "Giornaliere" => !entry.IsBonus && !entry.IsInfinite,
-            "Bonus" => entry.IsBonus,
+            "Bonus" => entry.IsBonus && (_historyBonusLength == 0 || entry.WordLength == _historyBonusLength),
             "Infinite" => entry.IsInfinite,
             "Vinte" => entry.Won,
             "Perse" => !entry.Won,
@@ -3182,6 +3216,10 @@ public sealed class MainViewModel : ObservableObject
         OnPropertyChanged(nameof(IsHistoryFilterAllActive));
         OnPropertyChanged(nameof(IsHistoryFilterDailyActive));
         OnPropertyChanged(nameof(IsHistoryFilterBonusActive));
+        OnPropertyChanged(nameof(IsHistoryBonusLengthAllActive));
+        OnPropertyChanged(nameof(IsHistoryBonusLengthFiveActive));
+        OnPropertyChanged(nameof(IsHistoryBonusLengthSixActive));
+        OnPropertyChanged(nameof(IsHistoryBonusLengthSevenActive));
         OnPropertyChanged(nameof(IsHistoryFilterInfiniteActive));
         OnPropertyChanged(nameof(IsHistoryFilterWonActive));
         OnPropertyChanged(nameof(IsHistoryFilterLostActive));
