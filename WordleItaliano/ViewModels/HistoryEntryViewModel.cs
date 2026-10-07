@@ -2,6 +2,19 @@ namespace WordleItaliano.ViewModels;
 
 public sealed class HistoryEntryViewModel : ObservableObject
 {
+    private bool _isFavorite;
+    public bool IsFavorite
+    {
+        get => _isFavorite;
+        set
+        {
+            if (!SetProperty(ref _isFavorite, value)) return;
+            OnPropertyChanged(nameof(FavoriteIcon));
+            OnPropertyChanged(nameof(FavoriteTooltip));
+        }
+    }
+    public string FavoriteIcon => IsFavorite ? "★" : "☆";
+    public string FavoriteTooltip => IsFavorite ? "Rimuovi dai preferiti" : "Aggiungi ai preferiti";
     public HistoryEntryViewModel(string date, string solution, string result, string attempts, string guesses, string mode, string points, string timeText, string shareText)
     {
         Date = date;

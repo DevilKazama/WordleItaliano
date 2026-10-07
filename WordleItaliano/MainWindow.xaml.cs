@@ -11,14 +11,42 @@ namespace WordleItaliano;
 
 public partial class MainWindow : Window
 {
+    private Controls.FavoritesDrawerWindow? _favoritesDrawer;
+    private Controls.SubmittedRowsAdorner? _submittedRowsAdorner;
+    private Point _submittedDragStart;
+    private int? _submittedDragTile;
     private readonly DispatcherTimer _dateTimer = new() { Interval = TimeSpan.FromMinutes(1) };
     private readonly DispatcherTimer _timerRefresh = new() { Interval = TimeSpan.FromSeconds(1) };
 
     public MainWindow()
     {
         InitializeComponent();
+        MainLayout.PreviewMouseDown += (_, e) =>
+        {
+            if (e.GetPosition(MainLayout).Y >= MainHeader.ActualHeight)
+                ReturnToGameFromFavoriteForm();
+        };
         if (DataContext is MainViewModel viewModel)
         {
+            Loaded += (_, _) => InitializeSubmittedRowsAdorner(viewModel);
+            viewModel.PropertyChanged += FavoritesPropertyChanged;
+            viewModel.FavoriteInserted += FavoriteInserted;
+            viewModel.FavoriteFormClosed += FavoriteFormClosed;
+            LocationChanged += (_, _) => SynchronizeFavoritesDrawer();
+            SizeChanged += (_, _) => SynchronizeFavoritesDrawer();
+            StateChanged += (_, _) => SynchronizeFavoritesDrawer();
+            DpiChanged += (_, _) => Dispatcher.BeginInvoke(new Action(SynchronizeFavoritesDrawer));
+            Loaded += (_, _) => SynchronizeFavoritesDrawer();
+            Closed += (_, _) =>
+            {
+                viewModel.PropertyChanged -= FavoritesPropertyChanged;
+                viewModel.FavoriteInserted -= FavoriteInserted;
+                viewModel.FavoriteFormClosed -= FavoriteFormClosed;
+                _dateTimer.Stop();
+                _timerRefresh.Stop();
+                _favoritesDrawer?.Close();
+                _favoritesDrawer = null;
+            };
             viewModel.ShakeRequested += (_, row) => ShakeRow(row);
             viewModel.RevealRequested += (_, row) => RevealRow(row);
             viewModel.LetterEntered += (_, index) => PopTile(index);
@@ -35,6 +63,84 @@ public partial class MainWindow : Window
         }
     }
 
+    private void FavoritesPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        _submittedRowsAdorner?.InvalidateVisual();
+        if (e.PropertyName is nameof(MainViewModel.IsFavoritesDocked) or nameof(MainViewModel.FavoritesPanelSide))
+            SynchronizeFavoritesDrawer();
+    }
+    private void InitializeSubmittedRowsAdorner(MainViewModel vm)
+    {
+        if (_submittedRowsAdorner is not null) return;
+        var layer = System.Windows.Documents.AdornerLayer.GetAdornerLayer(Board);
+        if (layer is null) return;
+        _submittedRowsAdorner = new Controls.SubmittedRowsAdorner(Board, vm);
+        _submittedRowsAdorner.DragRequested += BeginSubmittedWordDrag;
+        layer.Add(_submittedRowsAdorner);
+    }
+    private void BeginSubmittedWordDrag(string word)
+    {
+        if (DataContext is not MainViewModel vm) return;
+        vm.IsFavoritesPanelOpen = true;
+        var layer = System.Windows.Documents.AdornerLayer.GetAdornerLayer(MainLayout);
+        var preview = new Controls.DragWordPreviewAdorner(MainLayout, vm, word) { IsHitTestVisible = false };
+        layer?.Add(preview);
+        void UpdatePreview()
+        {
+            if (GetCursorPos(out var cursor)) preview.Position = MainLayout.PointFromScreen(new Point(cursor.X, cursor.Y));
+            preview.InvalidateVisual();
+        }
+        UpdatePreview();
+        GiveFeedbackEventHandler feedback = (_, e) =>
+        {
+            UpdatePreview();
+            Mouse.SetCursor(Cursors.SizeAll);
+            e.UseDefaultCursors = false;
+            e.Handled = true;
+        };
+        GiveFeedback += feedback;
+        try { DragDrop.DoDragDrop(Board, new DataObject("WordleSubmittedWord", word), DragDropEffects.Copy); }
+        finally
+        {
+            GiveFeedback -= feedback;
+            layer?.Remove(preview);
+            _favoritesDrawer?.ClearSubmittedDropFeedback();
+            Mouse.SetCursor(null);
+        }
+    }
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    private struct CursorPoint { public int X, Y; }
+    [System.Runtime.InteropServices.DllImport("user32.dll")]
+    private static extern bool GetCursorPos(out CursorPoint point);
+
+    private void FavoriteInserted(object? sender, EventArgs e)
+    {
+        Activate();
+        Focus();
+        Keyboard.Focus(this);
+    }
+    private void FavoriteFormClosed(object? sender, EventArgs e)
+    {
+        if (DataContext is MainViewModel { CanUseFavoriteWord: true }) FavoriteInserted(sender, e);
+    }
+    private void ReturnToGameFromFavoriteForm()
+    {
+        if (DataContext is MainViewModel { IsManualFavoriteOpen: true } vm)
+            vm.CancelFavoriteForm();
+    }
+
+    private void SynchronizeFavoritesDrawer()
+    {
+        if (DataContext is not MainViewModel vm) return;
+        if (!IsVisible || WindowState == WindowState.Minimized || !vm.IsFavoritesDocked)
+        {
+            _favoritesDrawer?.Retract(WindowState == WindowState.Minimized || !IsVisible);
+            return;
+        }
+        _favoritesDrawer ??= new Controls.FavoritesDrawerWindow(this, vm);
+        _favoritesDrawer.OpenAttached(vm.FavoritesPanelSide == "Destra");
+    }
+
     private static void EnsureCurrentGameAndCheckUpdates(MainViewModel viewModel)
     {
         if (viewModel.EnsureCurrentGame())
@@ -45,6 +151,18 @@ public partial class MainWindow : Window
 
     private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
     {
+        if (DataContext is MainViewModel { IsManualFavoriteOpen: true } formVm)
+        {
+            if (e.Key == Key.Escape) formVm.CancelFavoriteForm();
+            e.Handled = true;
+            return;
+        }
+        if (e.Key == Key.Escape && DataContext is MainViewModel { IsFavoritesPanelOpen: true } vm)
+        {
+            vm.IsFavoritesPanelOpen = false;
+            e.Handled = true;
+            return;
+        }
         if (e.Key == Key.Tab)
         {
             e.Handled = true;
@@ -100,9 +218,29 @@ public partial class MainWindow : Window
     {
         if (DataContext is MainViewModel viewModel && sender is FrameworkElement { DataContext: TileViewModel tile })
         {
+            _submittedDragTile = viewModel.GetSubmittedFavoriteWord(tile.Index) is not null ? tile.Index : null;
+            _submittedDragStart = e.GetPosition(this);
+            if (_submittedDragTile.HasValue) ((UIElement)sender).CaptureMouse();
             viewModel.SelectTile(tile.Index);
             e.Handled = true;
         }
+    }
+    private void Tile_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+    {
+        _submittedDragTile = null;
+        ((UIElement)sender).ReleaseMouseCapture();
+    }
+    private void Tile_MouseMove(object sender, MouseEventArgs e)
+    {
+        if (_submittedDragTile is not int index || e.LeftButton != MouseButtonState.Pressed || DataContext is not MainViewModel vm) return;
+        var position = e.GetPosition(this);
+        if (Math.Abs(position.X - _submittedDragStart.X) < SystemParameters.MinimumHorizontalDragDistance &&
+            Math.Abs(position.Y - _submittedDragStart.Y) < SystemParameters.MinimumVerticalDragDistance) return;
+        _submittedDragTile = null;
+        ((UIElement)sender).ReleaseMouseCapture();
+        if (vm.GetSubmittedFavoriteWord(index) is not string word) return;
+        BeginSubmittedWordDrag(word);
+        e.Handled = true;
     }
 
     private void ShakeRow(int row)

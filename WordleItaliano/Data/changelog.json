@@ -1,5 +1,16 @@
 [
   {
+    "version": "1.5.24",
+    "title": "Parole preferite",
+    "items": [
+      "Salva le parole dallo Storico, aggiungile manualmente oppure trascina una parola già giocata nel nuovo cassetto Preferiti.",
+      "Ritrova le parole della lunghezza della partita corrente e cliccale per inserirle nella griglia: la conferma resta su Invio.",
+      "Le lettere mostrano gli indizi già scoperti. Puoi escludere le parole con lettere sicuramente assenti.",
+      "Riordina la raccolta trascinando le parole e scegli se aprire il cassetto a destra o a sinistra.",
+      "Aggiunto filtro “Solo preferiti”."
+    ]
+  },
+  {
     "version": "1.5.23",
     "title": "Wrapped e Storico Bonus",
     "items": [

@@ -13,7 +13,7 @@ using WordleItaliano.Theme;
 
 namespace WordleItaliano.ViewModels;
 
-public sealed class MainViewModel : ObservableObject
+public sealed partial class MainViewModel : ObservableObject
 {
     private const int DataMigrationVersion = 3;
     private static readonly DateOnly OfficialStartDate = new(2026, 9, 1);
@@ -155,6 +155,7 @@ public sealed class MainViewModel : ObservableObject
         _storage = new StorageService();
         var userSettingsExists = _storage.UserSettingsExists;
         _userSettings = _storage.LoadUserSettings();
+        InitializeFavorites();
         _updateService = new AppUpdateService(_settings.UpdateRepositoryUrl);
         _changelogService = new ChangelogService();
         _dictionaryService = new DictionaryService();
@@ -987,6 +988,7 @@ public sealed class MainViewModel : ObservableObject
             return;
         }
 
+        if (!CanAcceptGameInput) return;
         if (key is >= Key.A and <= Key.Z)
         {
             HandleInput(key.ToString());
@@ -1038,6 +1040,7 @@ public sealed class MainViewModel : ObservableObject
         }
 
         input = input.ToUpperInvariant();
+        if (!CanAcceptGameInput) return;
         if (input == "INVIO" || input == "ENTER")
         {
             SubmitGuess();
@@ -1076,6 +1079,7 @@ public sealed class MainViewModel : ObservableObject
         }
 
         RefreshSelectedTile();
+        RefreshFavoriteInputState();
     }
 
     private void AddLetter(string letter)
@@ -1091,6 +1095,7 @@ public sealed class MainViewModel : ObservableObject
         Tiles[index].State = TileState.Filled;
         LetterEntered?.Invoke(this, index);
         MoveSelectionTo(Math.Min(_selectedColumn + 1, _currentWordLength - 1));
+        RefreshFavoriteInputState();
     }
 
     private void RemoveLetter()
@@ -1109,6 +1114,7 @@ public sealed class MainViewModel : ObservableObject
 
         Tiles[index].Letter = string.Empty;
         Tiles[index].State = TileState.Empty;
+        RefreshFavoriteInputState();
     }
 
     private void SubmitGuess()
@@ -1266,6 +1272,8 @@ public sealed class MainViewModel : ObservableObject
 
     private string GetCurrentGuess()
     {
+        if (_currentRow is < 0 or >= 6 || Tiles.Count < (_currentRow + 1) * _currentWordLength)
+            return string.Empty;
         var letters = Enumerable.Range(0, _currentWordLength)
             .Select(column => Tiles[CurrentTileIndex(column)].Letter);
         return string.Concat(letters).ToLowerInvariant();
@@ -2101,6 +2109,7 @@ public sealed class MainViewModel : ObservableObject
         {
             key.State = TileState.Empty;
         }
+        RefreshFavorites();
     }
 
     private void LoadGuesses(IReadOnlyList<string> guesses)
@@ -3129,6 +3138,7 @@ public sealed class MainViewModel : ObservableObject
         foreach (var entry in Statistics.History
                      .Where(item => item.Won || item.Guesses.Count >= 6)
                      .Where(MatchesHistoryFilter)
+                     .Where(entry => !HistoryOnlyFavorites || IsFavorite(entry.Solution))
                      .OrderByDescending(item => item.Date)
                      .ThenBy(item => item.IsBonus ? 1 : 0))
         {
@@ -3161,7 +3171,7 @@ public sealed class MainViewModel : ObservableObject
                 mode,
                 IsCompetitiveEntry(entry) ? FormatPoints(points) : string.Empty,
                 entry.DurationSeconds is not null ? FormatDuration(entry.DurationSeconds.Value) : string.Empty,
-                BuildShareText(entry)));
+                BuildShareText(entry)) { IsFavorite = IsFavorite(entry.Solution) });
         }
 
         IsHistoryEmptyVisible = HistoryRows.Count == 0;
