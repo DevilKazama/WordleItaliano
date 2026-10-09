@@ -1,5 +1,14 @@
 [
   {
+    "version": "1.5.25",
+    "title": "Sfide più eque e salvataggi più sicuri",
+    "items": [
+      "Giornaliera e Bonus ufficiali sono disponibili sulle postazioni autorizzate. Sugli altri PC puoi giocare in Allenamento, senza punti o premi competitivi.",
+      "Migliorata la protezione dei salvataggi e il recupero dopo chiusure improvvise. Impedita l’apertura contemporanea di più partite sugli stessi dati.",
+      "Le partite Infinite non eliminano più dallo storico i risultati della Giornaliera e del Bonus."
+    ]
+  },
+  {
     "version": "1.5.24",
     "title": "Parole preferite",
     "items": [

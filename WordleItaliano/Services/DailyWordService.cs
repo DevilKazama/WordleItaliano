@@ -4,6 +4,9 @@ namespace WordleItaliano.Services;
 
 public sealed class DailyWordService
 {
+#if WORDLE_TEST_BUILD
+    public static int InvocationCount { get; private set; }
+#endif
     private readonly WordRepository _repository;
     private readonly AppSettings _settings;
 
@@ -22,8 +25,15 @@ public sealed class DailyWordService
         return GetWordForDate(DateOnly.FromDateTime(DateTime.Today));
     }
 
-    public string GetWordForDate(DateOnly date)
+    public string GetWordForDate(DateOnly date, string? sequenceId = null)
     {
+#if WORDLE_TEST_BUILD
+        InvocationCount++;
+#endif
+        PcAuthorization.RequireOfficial();
+        var sequence = sequenceId ?? OfficialSequence.ForDate(date);
+        if (!OfficialSequence.IsKnown(sequence)) throw new InvalidOperationException("Sequenza ufficiale sconosciuta.");
+        if (sequence == OfficialSequence.Next) return OfficialSequence.GetNext(date).Daily;
         var count = _repository.DailyWords.Count;
         var index = StableDateSeed(date, 0x5a17cafe) % count;
         return _repository.DailyWords[index];
@@ -34,8 +44,15 @@ public sealed class DailyWordService
         return GetBonusWordForDate(DateOnly.FromDateTime(DateTime.Today));
     }
 
-    public (string Word, int Length) GetBonusWordForDate(DateOnly date)
+    public (string Word, int Length) GetBonusWordForDate(DateOnly date, string? sequenceId = null)
     {
+#if WORDLE_TEST_BUILD
+        InvocationCount++;
+#endif
+        PcAuthorization.RequireOfficial();
+        var sequence = sequenceId ?? OfficialSequence.ForDate(date);
+        if (!OfficialSequence.IsKnown(sequence)) throw new InvalidOperationException("Sequenza ufficiale sconosciuta.");
+        if (sequence == OfficialSequence.Next) { var next = OfficialSequence.GetNext(date); return (next.Bonus, next.Length); }
         var seed = StableDateSeed(date, 0x51f15e);
         var length = 5 + seed % 3;
         var words = _repository.GetBonusWords(length);
@@ -48,7 +65,7 @@ public sealed class DailyWordService
         unchecked
         {
             var value = 2166136261u;
-            foreach (var c in date.ToString("yyyy-MM-dd"))
+            foreach (var c in date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture))
             {
                 value ^= c;
                 value *= 16777619u;

@@ -123,7 +123,7 @@ public sealed partial class MainViewModel
     public bool CanUseFavoriteWord => CanAcceptGameInput;
     private bool HasActiveGuessRow => CurrentStatus == GameStatus.Playing && _currentRow is >= 0 and < 6 &&
         _currentWordLength > 0 && Tiles is not null && (_currentRow + 1) * _currentWordLength <= Tiles.Count;
-    private bool CanAcceptGameInput => HasActiveGuessRow && !IsManualFavoriteOpen && DateTime.UtcNow >= _favoritesAnimationUntil &&
+    private bool CanAcceptGameInput => !_savedGameBlocked && !_storage.IsFaulted && HasActiveGuessRow && !IsManualFavoriteOpen && DateTime.UtcNow >= _favoritesAnimationUntil &&
         !IsBonusPromptVisible && !IsStatisticsVisible && !IsHistoryVisible && !IsHelpVisible && !IsWrappedVisible &&
         !IsMonthlyRecapVisible && !IsResetConfirmVisible && !IsSettingsVisible && !IsUpdateDialogVisible &&
         !IsProfileDialogVisible && !IsChangelogVisible && !IsPerfectShotCelebrationVisible && !IsPerfectShotPrizeDialogVisible;

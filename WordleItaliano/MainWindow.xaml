@@ -304,7 +304,7 @@
                     <Button Style="{StaticResource TopButtonStyle}" Content="Storico" Command="{Binding ShowHistoryCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Wrapped" Command="{Binding ShowWrappedCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Tastiera" Command="{Binding ToggleKeyboardCommand}" />
-                    <Button Style="{StaticResource TopButtonStyle}" Content="Infinita" Command="{Binding StartInfiniteCommand}" />
+                    <Button Style="{StaticResource TopButtonStyle}" Content="{Binding InfiniteButtonText}" Command="{Binding StartInfiniteCommand}" />
                     <Button Style="{StaticResource TopButtonStyle}" Content="Opzioni" Command="{Binding ShowSettingsCommand}" />
                 </WrapPanel>
             </Grid>
@@ -316,6 +316,9 @@
             <StackPanel Margin="18,12,18,6">
 
             <StackPanel x:Name="GameHeading" HorizontalAlignment="Center" Margin="0,0,0,8">
+                <TextBlock Text="{Binding TrainingNotice}" TextWrapping="Wrap" MaxWidth="420" TextAlignment="Center"
+                           Margin="0,0,0,6" Visibility="{Binding IsTraining, Converter={StaticResource BoolVisibility}}"
+                           Foreground="{Binding ThemeMode, Converter={StaticResource ThemeBrush}, ConverterParameter=Foreground}" />
                 <Border HorizontalAlignment="Center"
                         Padding="10,2"
                         Margin="0,0,0,3"

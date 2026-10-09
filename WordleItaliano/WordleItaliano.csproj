@@ -3,10 +3,10 @@
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <Version>1.5.24</Version>
-    <AssemblyVersion>1.5.24.0</AssemblyVersion>
-    <FileVersion>1.5.24.0</FileVersion>
-    <InformationalVersion>1.5.24</InformationalVersion>
+    <Version>1.5.25</Version>
+    <AssemblyVersion>1.5.25.0</AssemblyVersion>
+    <FileVersion>1.5.25.0</FileVersion>
+    <InformationalVersion>1.5.25</InformationalVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
@@ -15,6 +15,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\tools\PcIdentityCollector\PcIdentity.cs" Link="Services\PcIdentity.cs" />
+    <EmbeddedResource Include="Data\dailyWords.json;Data\bonusWords5.json;Data\bonusWords6.json;Data\bonusWords7.json" LogicalName="FrozenSequence.%(Filename)%(Extension)" />
     <ApplicationDefinition Remove="App.xaml" />
     <Page Include="App.xaml" />
     <Resource Include="Assets\AppIcon.png" />
@@ -22,6 +24,12 @@
     <Content Include="Data\*.json" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="appsettings.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
+
+  <PropertyGroup Condition="'$(WordleTestBuild)' == 'true'">
+    <DefineConstants>$(DefineConstants);WORDLE_TEST_BUILD</DefineConstants>
+    <AssemblyName>WordleItaliano.TestBuild</AssemblyName>
+    <OutputPath>bin\TestBuild\$(Configuration)\</OutputPath>
+  </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Velopack" Version="1.2.0" />

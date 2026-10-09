@@ -25,6 +25,12 @@ public sealed partial class MainViewModel : ObservableObject
     private readonly UserSettings _userSettings;
     private readonly ChangelogService _changelogService;
     private readonly DictionaryService _dictionaryService;
+    private readonly PcAccess _pcAccess = PcAuthorization.Current;
+    private string _sequenceId = OfficialSequence.Legacy;
+    public bool IsOfficialAvailable => _pcAccess.IsAuthorized;
+    public bool IsTraining => !IsOfficialAvailable;
+    public string TrainingNotice => _pcAccess.Message;
+    public string InfiniteButtonText => IsTraining ? "Allenamento" : "Infinita";
     private UpdateInfo? _pendingUpdate;
     private string _dailySolution = string.Empty;
     private string _bonusSolution = string.Empty;
@@ -151,7 +157,7 @@ public sealed partial class MainViewModel : ObservableObject
     {
         _settings = LoadSettings();
         _repository = new WordRepository();
-        _dailyWordService = new DailyWordService(_repository, _settings);
+        _dailyWordService = IsOfficialAvailable ? new DailyWordService(_repository, _settings) : null!;
         _storage = new StorageService();
         var userSettingsExists = _storage.UserSettingsExists;
         _userSettings = _storage.LoadUserSettings();
@@ -163,8 +169,8 @@ public sealed partial class MainViewModel : ObservableObject
         PlayerName = _userSettings.PlayerName.Trim();
         ProfileNameDraft = PlayerName;
         IsProfileDialogVisible = string.IsNullOrWhiteSpace(PlayerName);
-        _todayKey = _dailyWordService.TodayKey;
-        SetSolutionsForDate(DateOnly.FromDateTime(DateTime.Today));
+        _todayKey = DailyWordService.FormatDateKey(DateOnly.FromDateTime(DateTime.Today));
+        if (IsOfficialAvailable) SetSolutionsForDate(DateOnly.FromDateTime(DateTime.Today));
         _currentSolution = _dailySolution;
 
         Tiles = [];
@@ -175,9 +181,13 @@ public sealed partial class MainViewModel : ObservableObject
             new ObservableCollection<KeyboardKeyViewModel>("ZXCVBNM".Select(c => new KeyboardKeyViewModel(c.ToString())))
         ];
         Statistics = _storage.LoadStatistics();
-        ApplyDataMigrationIfNeeded();
-        NormalizeStatistics();
-        NormalizeStreakForToday();
+        if (IsOfficialAvailable) PrepareSavedGame();
+        if (IsOfficialAvailable && !_savedGameBlocked)
+        {
+            ApplyDataMigrationIfNeeded();
+            NormalizeStatistics();
+            NormalizeStreakForToday();
+        }
         StatCards =
         [
             new StatCardViewModel("Punti mese"),
@@ -329,7 +339,7 @@ public sealed partial class MainViewModel : ObservableObject
     public ObservableCollection<WrappedCalendarDayViewModel> WrappedEndCalendarDays { get; }
     public ObservableCollection<HistoryEntryViewModel> HistoryRows { get; }
     public Statistics Statistics { get; }
-    public string SplashSubtitle => string.IsNullOrWhiteSpace(PlayerName)
+    public string SplashSubtitle => IsTraining ? "Allenamento casuale, senza punti competitivi" : string.IsNullOrWhiteSpace(PlayerName)
         ? "La sfida quotidiana"
         : $"La sfida quotidiana di {PlayerName}";
     public ICommand KeyCommand { get; }
@@ -933,6 +943,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     public bool EnsureCurrentGame()
     {
+        if (IsTraining) return false;
+        if (_savedGameBlocked || _storage.IsFaulted) return false;
         var today = DateOnly.FromDateTime(DateTime.Today);
         var todayKey = DailyWordService.FormatDateKey(today);
         if (_todayKey == todayKey)
@@ -1195,7 +1207,7 @@ public sealed partial class MainViewModel : ObservableObject
             StopCurrentTimer();
             SetCurrentStatus(GameStatus.Lost);
             Message = _isInfiniteActive
-                ? $"Infinita persa. La parola era {_currentSolution.ToUpperInvariant()}."
+                ? $"{(IsTraining ? "Allenamento" : "Infinita")} persa. La parola era {_currentSolution.ToUpperInvariant()}."
                 : _isBonusActive
                 ? $"Bonus perso. La parola era {_currentSolution.ToUpperInvariant()}."
                 : $"La parola era {_currentSolution.ToUpperInvariant()}.";
@@ -1513,15 +1525,19 @@ public sealed partial class MainViewModel : ObservableObject
         _ => 0
     };
 
-    private void SetSolutionsForDate(DateOnly date)
+    private void SetSolutionsForDate(DateOnly date, string? sequenceId = null)
     {
+        PcAuthorization.RequireOfficial();
         _todayKey = DailyWordService.FormatDateKey(date);
-        _dailySolution = _dailyWordService.GetWordForDate(date);
-        (_bonusSolution, _bonusWordLength) = _dailyWordService.GetBonusWordForDate(date);
+        _sequenceId = sequenceId ?? OfficialSequence.ForDate(date);
+        _dailySolution = _dailyWordService.GetWordForDate(date, _sequenceId);
+        (_bonusSolution, _bonusWordLength) = _dailyWordService.GetBonusWordForDate(date, _sequenceId);
     }
 
     private void StartNewGameForDate(DateOnly date, string? message)
     {
+        if (IsTraining) { StartInfinite(); return; }
+        _verifiedSavedStreak = null;
         SetSolutionsForDate(date);
         _dailyGuesses.Clear();
         _bonusGuesses.Clear();
@@ -1555,7 +1571,32 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void LoadOrStartGame()
     {
-        var saved = _storage.LoadGame();
+        if (IsTraining)
+        {
+            RestoreInfinite(_storage.LoadGame()!.Infinite);
+            if (string.IsNullOrWhiteSpace(_infiniteSolution)) StartInfinite();
+            else
+            {
+                _isInfiniteActive = true;
+                _currentSolution = _infiniteSolution;
+                SetModeBadge("Allenamento", "Nessun punto competitivo");
+                SetupBoard(5);
+                LoadGuesses(_infiniteGuesses);
+                ResumeCurrentTimerIfNeeded();
+                Message = _infiniteStatus == GameStatus.Playing ? "Allenamento: parola casuale da 5 lettere." : "Allenamento completato.";
+                RefreshCopyButtonVisibility();
+            }
+            IsSplashVisible = true;
+            return;
+        }
+        if (_savedGameBlocked)
+        {
+            SetupDailyBoard();
+            Message = _savedGameWarning;
+            ShowToast(_savedGameWarning);
+            return;
+        }
+        var saved = _preparedSavedGame;
         var savedDate = string.IsNullOrWhiteSpace(saved?.GameDate)
             ? saved?.Date
             : saved.GameDate;
@@ -1568,17 +1609,6 @@ public sealed partial class MainViewModel : ObservableObject
         {
             StartNewGameForDate(DateOnly.FromDateTime(DateTime.Today), null);
             return;
-        }
-
-        if (!string.IsNullOrWhiteSpace(saved.Solution))
-        {
-            _dailySolution = saved.Solution;
-        }
-
-        if (!string.IsNullOrWhiteSpace(saved.Bonus.Solution) && saved.Bonus.WordLength is >= 5 and <= 7)
-        {
-            _bonusSolution = saved.Bonus.Solution;
-            _bonusWordLength = saved.Bonus.WordLength;
         }
 
         _dailyStatus = saved.Status;
@@ -1597,6 +1627,8 @@ public sealed partial class MainViewModel : ObservableObject
         _bonusGuesses.Clear();
         _bonusGuesses.AddRange(saved.Bonus.Guesses.Take(6));
         _bonusPerfectShot = saved.Bonus.PerfectShot?.Clone() ?? new PerfectShotState();
+        ReconcileSavedCompetitiveResults();
+        _storage.SaveGameAndStatistics(saved, Statistics);
         if (saved.Bonus.WordLength != _bonusWordLength)
         {
             _bonusStatus = GameStatus.Playing;
@@ -1618,7 +1650,6 @@ public sealed partial class MainViewModel : ObservableObject
         if (_dailyStatus == GameStatus.Won)
         {
             Message = "Hai già completato la parola di oggi.";
-            UpsertHistory(CreateDailyHistoryEntry(true, _dailyGuesses.Count));
             if (_isBonusUnlocked && _bonusStatus == GameStatus.Playing && _bonusGuesses.Count == 0)
             {
                 IsBonusPromptVisible = true;
@@ -1627,12 +1658,6 @@ public sealed partial class MainViewModel : ObservableObject
         else if (_dailyStatus == GameStatus.Lost)
         {
             Message = $"Parola di oggi completata. Era {_dailySolution.ToUpperInvariant()}.";
-            UpsertHistory(CreateDailyHistoryEntry(false, 0));
-        }
-
-        if (_bonusStatus != GameStatus.Playing && _bonusGuesses.Count > 0)
-        {
-            UpsertHistory(CreateBonusHistoryEntry(_bonusStatus == GameStatus.Won, _bonusStatus == GameStatus.Won ? _bonusGuesses.Count : 0));
         }
 
         EnsureCompletedInfiniteInHistory();
@@ -1658,6 +1683,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void SetupDailyBoard()
     {
+        PcAuthorization.RequireOfficial();
         PauseCurrentTimer();
         _isInfiniteActive = false;
         _isBonusActive = false;
@@ -1679,6 +1705,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void StartBonus(bool save)
     {
+        if (!IsOfficialAvailable) return;
         if (EnsureCurrentGame())
         {
             return;
@@ -1730,11 +1757,11 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         _currentSolution = _infiniteSolution;
-        SetModeBadge("Infinita", "Parole senza limite");
+        SetModeBadge(IsTraining ? "Allenamento" : "Infinita", IsTraining ? "Nessun punto competitivo" : "Parole senza limite");
         SetupBoard(5);
         LoadGuesses(_infiniteGuesses);
         ResumeCurrentTimerIfNeeded();
-        Message = "Modalità infinita: parola casuale da 5 lettere.";
+        Message = IsTraining ? "Allenamento: parola casuale da 5 lettere." : "Modalità infinita: parola casuale da 5 lettere.";
         RefreshCopyButtonVisibility();
         SaveGame();
     }
@@ -1749,6 +1776,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void ViewDaily()
     {
+        if (!IsOfficialAvailable) return;
         if (EnsureCurrentGame())
         {
             return;
@@ -1768,6 +1796,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void ViewBonus()
     {
+        if (!IsOfficialAvailable) return;
         if (EnsureCurrentGame())
         {
             return;
@@ -1801,7 +1830,7 @@ public sealed partial class MainViewModel : ObservableObject
             ? _infiniteStatus != GameStatus.Playing && _infiniteGuesses.Count > 0
             : _dailyStatus != GameStatus.Playing && _dailyGuesses.Count > 0;
         IsBonusViewButtonVisible = !_isBonusActive && _bonusGuesses.Count > 0;
-        IsDailyViewButtonVisible = _isBonusActive || _isInfiniteActive;
+        IsDailyViewButtonVisible = IsOfficialAvailable && (_isBonusActive || _isInfiniteActive);
         IsNewInfiniteButtonVisible = _isInfiniteActive && _infiniteStatus != GameStatus.Playing;
         RefreshStreakLine();
         RefreshScoreLine();
@@ -1994,7 +2023,6 @@ public sealed partial class MainViewModel : ObservableObject
         UpsertHistory(_pendingPerfectShotIsBonus
             ? CreateBonusHistoryEntry(_bonusStatus == GameStatus.Won, _bonusStatus == GameStatus.Won ? _bonusGuesses.Count : 0)
             : CreateDailyHistoryEntry(_dailyStatus == GameStatus.Won, _dailyStatus == GameStatus.Won ? _dailyGuesses.Count : 0));
-        _storage.SaveStatistics(Statistics);
         SaveGame();
         RefreshHistoryView();
         if (!_pendingPerfectShotIsBonus && _isBonusUnlocked && _bonusStatus == GameStatus.Playing && _bonusGuesses.Count == 0)
@@ -2137,12 +2165,14 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void SaveGame()
     {
+        if (_savedGameBlocked || _storage.IsFaulted) return;
         SaveCurrentTimerCheckpoint();
-        _storage.SaveGame(new SavedGame
+        _storage.SaveGameAndStatistics(new SavedGame
         {
             GameDate = _todayKey,
             Date = _todayKey,
-            Solution = _dailySolution,
+            FormatVersion = 2,
+            SequenceId = _sequenceId,
             WordLength = 5,
             Guesses = [.. _dailyGuesses],
             Status = _dailyStatus,
@@ -2152,7 +2182,6 @@ public sealed partial class MainViewModel : ObservableObject
             Bonus = new BonusGame
             {
                 IsUnlocked = _isBonusUnlocked,
-                Solution = _bonusSolution,
                 WordLength = _bonusWordLength,
                 Guesses = [.. _bonusGuesses],
                 Status = _bonusStatus,
@@ -2168,11 +2197,12 @@ public sealed partial class MainViewModel : ObservableObject
                 ElapsedSeconds = GetInfiniteElapsedSeconds(),
                 TimerStarted = _infiniteTimerStarted
             }
-        });
+        }, Statistics);
     }
 
     private void RecordDaily(bool won, int attempts)
     {
+        PcAuthorization.RequireOfficial();
         if (_dailyStatisticsAlreadyRecorded)
         {
             return;
@@ -2206,7 +2236,7 @@ public sealed partial class MainViewModel : ObservableObject
 
         UpsertHistory(CreateDailyHistoryEntry(won, attempts));
         _dailyStatisticsAlreadyRecorded = true;
-        _storage.SaveStatistics(Statistics);
+        SaveGame();
         RefreshStatisticsView();
         RefreshHistoryView();
         RefreshWrappedView();
@@ -2214,6 +2244,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void RecordBonus(bool won, int attempts)
     {
+        PcAuthorization.RequireOfficial();
         var today = DateOnly.Parse(_todayKey);
         var previousDayFinalScore = GetDayScoreSnapshot(today, null).FinalScore;
         var entry = CreateBonusHistoryEntry(won, attempts);
@@ -2234,7 +2265,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         UpsertHistory(entry);
-        _storage.SaveStatistics(Statistics);
+        SaveGame();
         RefreshStatisticsView();
         RefreshHistoryView();
         RefreshWrappedView();
@@ -2242,6 +2273,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void RecordInfinite(bool won, int attempts)
     {
+        if (IsTraining) { SaveGame(); RefreshCopyButtonVisibility(); return; }
         Statistics.InfinitePlayed++;
         if (won)
         {
@@ -2251,7 +2283,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         UpsertHistory(CreateInfiniteHistoryEntry());
-        _storage.SaveStatistics(Statistics);
+        SaveGame();
         RefreshStatisticsView();
         RefreshHistoryView();
         RefreshWrappedView();
@@ -2337,6 +2369,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void NormalizeStatistics()
     {
+        ApplyHistoryRetention();
         if (Statistics.WinDistribution.Length != 6)
         {
             Statistics.WinDistribution = new int[6];
@@ -2358,7 +2391,6 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         Statistics.History = Statistics.History
-            .Where(IsOnOrAfterOfficialStart)
             .OrderBy(entry => entry.Date)
             .ThenBy(entry => entry.IsBonus ? 1 : 0)
             .ToList();
@@ -2371,6 +2403,9 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void RebuildDerivedStatisticsFromHistory()
     {
+        var infinitePlayed = Statistics.InfinitePlayed;
+        var infiniteWon = Statistics.InfiniteWon;
+        var infiniteDistribution = Statistics.InfiniteWinDistribution.ToArray();
         Statistics.Played = 0;
         Statistics.Won = 0;
         Statistics.Points = 0;
@@ -2468,6 +2503,11 @@ public sealed partial class MainViewModel : ObservableObject
             Statistics.InfiniteWinDistribution[index]++;
         }
 
+        // Retained history may contain only a subset of lifetime Infinite results.
+        Statistics.InfinitePlayed = Math.Max(infinitePlayed, Statistics.InfinitePlayed);
+        Statistics.InfiniteWon = Math.Max(infiniteWon, Statistics.InfiniteWon);
+        for (var index = 0; index < Math.Min(6, infiniteDistribution.Length); index++)
+            Statistics.InfiniteWinDistribution[index] = Math.Max(infiniteDistribution[index], Statistics.InfiniteWinDistribution[index]);
         Statistics.Points = Statistics.History.Where(IsCompetitiveEntry).Sum(GetEntryScore);
     }
 
@@ -2974,6 +3014,8 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void ResetGameData()
     {
+        _savedGameBlocked = false;
+        _verifiedSavedStreak = null;
         _dailyGuesses.Clear();
         _bonusGuesses.Clear();
         _infiniteGuesses.Clear();
@@ -3036,11 +3078,6 @@ public sealed partial class MainViewModel : ObservableObject
         return !string.IsNullOrWhiteSpace(value) &&
                TryGetHistoryDate(value) is { } date &&
                date < OfficialStartDate;
-    }
-
-    private static bool IsOnOrAfterOfficialStart(GameHistoryEntry entry)
-    {
-        return TryGetHistoryDate(entry.Date) is { } date && date >= OfficialStartDate;
     }
 
     private DateOnly ClampWrappedPeriod(DateOnly period)
@@ -3189,6 +3226,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private void EnsureCompletedInfiniteInHistory()
     {
+        if (IsTraining) return;
         if (_infiniteStatus == GameStatus.Playing ||
             _infiniteGuesses.Count == 0 ||
             string.IsNullOrWhiteSpace(_infiniteSolution) ||
@@ -3654,7 +3692,7 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         var mode = entry.IsInfinite
-            ? "INFINITA"
+            ? IsTraining ? "ALLENAMENTO" : "INFINITA"
             : entry.IsBonus
             ? $"BONUS {entry.WordLength}"
             : "GIORNALIERA";
@@ -3772,6 +3810,7 @@ public sealed partial class MainViewModel : ObservableObject
 
     private int GetDailyStreakForDate(string dateKey, bool won)
     {
+        if (dateKey == _todayKey && _verifiedSavedStreak is int verified) return won ? verified : 0;
         if (!won || !DateOnly.TryParse(dateKey, out var date))
         {
             return 0;
@@ -4022,12 +4061,26 @@ public sealed partial class MainViewModel : ObservableObject
         }
 
         Statistics.History.Add(entry);
+        ApplyHistoryRetention();
         Statistics.History = Statistics.History
-            .OrderByDescending(item => item.Date)
-            .Take(365 * 2)
             .OrderBy(item => item.Date)
             .ThenBy(item => item.IsBonus ? 1 : 0)
             .ToList();
+    }
+
+    private void ApplyHistoryRetention()
+    {
+        // Equal timestamps are resolved by insertion order: the last added Infinite is the newest.
+        var expired = Statistics.History
+            .Select((entry, index) => new { Entry = entry, Index = index })
+            .Where(item => item.Entry.IsInfinite)
+            .OrderByDescending(item => item.Entry.Date, StringComparer.Ordinal)
+            .ThenByDescending(item => item.Index)
+            .Skip(730)
+            .Select(item => item.Index)
+            .ToHashSet();
+        if (expired.Count == 0) return;
+        Statistics.History = Statistics.History.Where((_, index) => !expired.Contains(index)).ToList();
     }
 
     private void CloseOverlays()
