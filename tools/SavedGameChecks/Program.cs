@@ -21,6 +21,7 @@ internal static class Program
         try
         {
             var app = new Application();
+            OfficialSequence.TestActivationDate = DateOnly.MaxValue;
             Velopack.VelopackApp.Build().Run();
             Run();
             Console.WriteLine($"PASS: {checks} isolated checks; no solution values printed; real user data untouched.");

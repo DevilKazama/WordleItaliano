@@ -27,6 +27,12 @@ public partial class App : Application
         }
         catch (Exception error) when (error is DataDirectoryInUseException or StorageFailureException or System.IO.IOException or UnauthorizedAccessException)
         {
+            try
+            {
+                System.IO.File.WriteAllText(System.IO.Path.Combine(System.IO.Path.GetTempPath(), "WordleItaliano-startup-error.log"),
+                    $"{error.GetType().FullName}\nHResult: {error.HResult}\n{error.StackTrace}");
+            }
+            catch (Exception logError) when (logError is System.IO.IOException or UnauthorizedAccessException) { }
             if (error is DataDirectoryInUseException) DataDirectoryLease.TryActivateExisting(DataDirectoryLease.DataFolder);
             MessageBox.Show(error is DataDirectoryInUseException or StorageFailureException ? error.Message :
                 "Non è possibile accedere alla cartella dati. I dati non sono stati cancellati. Chiedi assistenza.",

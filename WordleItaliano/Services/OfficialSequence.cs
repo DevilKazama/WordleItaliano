@@ -11,8 +11,7 @@ public static class OfficialSequence
 {
     public const string Legacy = "legacy-v1";
     public const string Next = "frozen-v2";
-    // Deliberately inactive. A coordinated future date must be agreed before publication.
-    public static DateOnly? ActivationDate => null;
+    public static DateOnly? ActivationDate => new DateOnly(2026, 10, 9);
 #if WORDLE_TEST_BUILD
     public static DateOnly? TestActivationDate { get; set; }
 #endif

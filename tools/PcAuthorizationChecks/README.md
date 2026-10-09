@@ -21,9 +21,9 @@ Le preferenze copiate possono essere lette; eventuali modifiche vengono salvate
 solo in training/userSettings.json, senza sovrascrivere le originali.
 Le due raccolte non vengono fuse automaticamente al ritorno sul PC autorizzato.
 
-## Sequenza predisposta, non attiva
+## Sequenza attiva dal 9 ottobre 2026
 
-OfficialSequence.ActivationDate e null: nessuna data e stata scelta.
+OfficialSequence.ActivationDate e il 9 ottobre 2026: i salvataggi gia iniziati mantengono la loro sequenza, le nuove sfide usano frozen-v2.
 Gli identificativi sono legacy-v1 e frozen-v2. Un salvataggio senza identificativo
 viene interpretato come legacy-v1; una partita gia iniziata mantiene tale scelta.
 Date future, identificativi sconosciuti o v2 non attiva richiedono verifica:

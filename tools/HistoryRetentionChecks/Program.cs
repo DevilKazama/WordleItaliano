@@ -17,6 +17,7 @@ internal static class Program
     {
         try
         {
+            OfficialSequence.TestActivationDate = DateOnly.MaxValue;
             var app = new Application(); Velopack.VelopackApp.Build().Run();
             foreach (var legacy in new[] { false, true }) Mixed(legacy, false);
             Mixed(false, true);

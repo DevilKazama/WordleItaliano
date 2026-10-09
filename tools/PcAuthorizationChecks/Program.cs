@@ -1,4 +1,5 @@
 using System.IO;
+using System.Diagnostics;
 using System.Reflection;
 using System.Text.Json;
 using System.Windows;
@@ -38,8 +39,9 @@ internal static class Program
     }
     private static string Serialized(object value) => JsonSerializer.Serialize(value);
 
-    [STAThread] private static int Main()
+    [STAThread] private static int Main(string[] args)
     {
+        if (args.Length == 1 && args[0] == "startup-worker") return StartupWorker();
         try
         {
             var app = new Application(); Velopack.VelopackApp.Build().Run();
@@ -49,9 +51,13 @@ internal static class Program
             Check(code1 == PcIdentity.ReadCode(), "actual installation identity is repeatable without printing it");
             Console.WriteLine("Actual local identity approved: " + PcAuthorization.CheckCode(code1).IsAuthorized);
             Training(Outside); Training("unreadable");
-            Sequences(); RealCopy(); ReleaseBoundary(); TrainingLayout();
+            Sequences(); RealCopy(); ReleaseBoundary(); TrainingLayout(); StartupProcesses();
             OfficialSequence.TestActivationDate = null;
-            Check(OfficialSequence.ActivationDate is null, "production next sequence remains inactive");
+            Check(OfficialSequence.ActivationDate == new DateOnly(2026, 10, 9), "production activation date is 9 October 2026");
+            Check(OfficialSequence.ForDate(new DateOnly(2026, 10, 8)) == OfficialSequence.Legacy &&
+                OfficialSequence.ForDate(new DateOnly(2026, 10, 9)) == OfficialSequence.Next &&
+                OfficialSequence.ForDate(new DateOnly(2026, 10, 10)) == OfficialSequence.Next,
+                "actual activation boundary selects legacy before 9 October and new sequence thereafter");
             Console.WriteLine($"PASS: {checks} PC and sequence checks; no solutions printed; real originals untouched.");
             app.Shutdown(); return 0;
         }
@@ -60,6 +66,85 @@ internal static class Program
             Console.WriteLine("FAIL: " + (error.InnerException?.Message ?? error.Message));
             Console.WriteLine(error.StackTrace); return 1;
         }
+    }
+
+    private static int StartupWorker()
+    {
+        try
+        {
+            Velopack.VelopackApp.Build().Run();
+            using var lease = DataDirectoryLease.Acquire(DataDirectoryLease.DataFolder);
+            var app = new WordleItaliano.App();
+            app.InitializeComponent();
+            app.DispatcherUnhandledException += (_, e) =>
+            {
+                Console.Error.WriteLine(e.Exception.GetType().FullName + "\n" + e.Exception.StackTrace);
+                e.Handled = true;
+                app.Shutdown(1);
+            };
+            var window = new WordleItaliano.MainWindow { ShowActivated = false, ShowInTaskbar = false };
+            window.Loaded += (_, _) =>
+            {
+                window.Hide();
+                var vm = (MainViewModel)window.DataContext;
+                Console.WriteLine(vm.IsTraining ? "STARTED: training" : "STARTED: official");
+                window.Dispatcher.BeginInvoke(System.Windows.Threading.DispatcherPriority.ApplicationIdle,
+                    new Action(() => window.Close()));
+            };
+            return app.Run(window);
+        }
+        catch (Exception error)
+        {
+            Console.Error.WriteLine(error.GetType().FullName + "\n" + error.StackTrace);
+            return 1;
+        }
+    }
+
+    private static void StartupProcesses()
+    {
+        var original = @"C:\Users\Magazzino3\AppData\Local\WordleItaliano";
+        var files = new[] { "game.json", "statistics.json", "userSettings.json" }
+            .ToDictionary(n => n, n => File.ReadAllBytes(Path.Combine(original, n)));
+        foreach (var code in Codes.Concat(new[] { Outside, "unreadable" }))
+        {
+            var folder = Path.Combine(Root, "startup-" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(folder);
+            foreach (var file in files) File.WriteAllBytes(Path.Combine(folder, file.Key), file.Value);
+            for (var attempt = 0; attempt < 2; attempt++)
+            {
+                var start = new ProcessStartInfo(Environment.ProcessPath!)
+                {
+                    UseShellExecute = false, CreateNoWindow = true,
+                    RedirectStandardOutput = true, RedirectStandardError = true,
+                    WorkingDirectory = AppContext.BaseDirectory
+                };
+                if (string.Equals(Path.GetFileNameWithoutExtension(Environment.ProcessPath), "dotnet", StringComparison.OrdinalIgnoreCase))
+                    start.ArgumentList.Add(typeof(Program).Assembly.Location);
+                start.ArgumentList.Add("startup-worker");
+                start.Environment["WORDLE_STORAGE_FOLDER"] = folder;
+                start.Environment["WORDLE_TEST_PC_CODE"] = code;
+                using var process = Process.Start(start)!;
+                var output = process.StandardOutput.ReadToEndAsync();
+                var error = process.StandardError.ReadToEndAsync();
+                if (!process.WaitForExit(30000))
+                {
+                    process.Kill(entireProcessTree: true);
+                    process.WaitForExit();
+                    throw new InvalidOperationException("Isolated startup worker timed out.");
+                }
+                var expected = Codes.Contains(code) ? "STARTED: official" : "STARTED: training";
+                Check(process.ExitCode == 0 && output.GetAwaiter().GetResult().Contains(expected) &&
+                    string.IsNullOrWhiteSpace(error.GetAwaiter().GetResult()),
+                    "complete window startup and graceful close succeeds in separate process (simulated identity)");
+                Check(File.ReadAllBytes(Path.Combine(folder, "statistics.json")).SequenceEqual(files["statistics.json"]),
+                    "complete startup preserves copied official statistics byte for byte");
+                if (!Codes.Contains(code))
+                    Check(files.All(file => File.ReadAllBytes(Path.Combine(folder, file.Key)).SequenceEqual(file.Value)),
+                        "external startup leaves copied official saves and preferences untouched");
+            }
+        }
+        Check(files.All(file => File.ReadAllBytes(Path.Combine(original, file.Key)).SequenceEqual(file.Value)),
+            "real originals untouched after ten full-window startup processes");
     }
 
     private static void Training(string code)
@@ -191,7 +276,8 @@ internal static class Program
 
     private static void ReleaseBoundary()
     {
-        var releasePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../WordleItaliano/bin/Release/net8.0-windows/WordleItaliano.dll"));
+        var releasePath = Environment.GetEnvironmentVariable("WORDLE_CHECK_RELEASE_ASSEMBLY") ??
+            Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "../../../../../WordleItaliano/bin/Release/net8.0-windows/WordleItaliano.dll"));
         var release = Assembly.LoadFile(releasePath);
         var lease = release.GetType("WordleItaliano.Services.DataDirectoryLease")!;
         Environment.SetEnvironmentVariable("WORDLE_STORAGE_FOLDER", Path.Combine(Root, "forbidden-alternative"));
@@ -207,8 +293,9 @@ internal static class Program
                 "distributed build ignores approved external and unreadable test overrides");
         }
         var sequence = release.GetType("WordleItaliano.Services.OfficialSequence")!;
-        Check(sequence.GetProperty("TestActivationDate") is null && sequence.GetProperty("ActivationDate")!.GetValue(null) is null,
-            "distributed build has no test activation control and next sequence inactive");
+        Check(sequence.GetProperty("TestActivationDate") is null &&
+            Equals(sequence.GetProperty("ActivationDate")!.GetValue(null), new DateOnly(2026, 10, 9)),
+            "distributed build has no test activation control and agreed activation date");
     }
 
     private static void TrainingLayout()

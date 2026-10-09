@@ -19,6 +19,7 @@ internal static class Program
     {
         try
         {
+            OfficialSequence.TestActivationDate = DateOnly.MaxValue;
             if (args.Length > 0) return Worker(args);
             var app = new Application();
             Velopack.VelopackApp.Build().Run();
