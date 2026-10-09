@@ -44,7 +44,7 @@ internal static class Program
         if (args.Length == 1 && args[0] == "startup-worker") return StartupWorker();
         try
         {
-            var app = new Application(); Velopack.VelopackApp.Build().Run();
+            var app = new Application { ShutdownMode = ShutdownMode.OnExplicitShutdown }; Velopack.VelopackApp.Build().Run();
             foreach (var code in Codes) Check(PcAuthorization.CheckCode(code).IsAuthorized, "approved code accepted (simulated identity)");
             Check(!PcAuthorization.CheckCode(Outside).IsAuthorized, "external code rejected");
             var code1 = PcIdentity.ReadCode();
@@ -52,6 +52,7 @@ internal static class Program
             Console.WriteLine("Actual local identity approved: " + PcAuthorization.CheckCode(code1).IsAuthorized);
             Training(Outside); Training("unreadable");
             Sequences(); RealCopy(); ReleaseBoundary(); TrainingLayout(); StartupProcesses();
+            StartupUpdateChecks.Run(Root, Codes[0]);
             OfficialSequence.TestActivationDate = null;
             Check(OfficialSequence.ActivationDate == new DateOnly(2026, 10, 9), "production activation date is 9 October 2026");
             Check(OfficialSequence.ForDate(new DateOnly(2026, 10, 8)) == OfficialSequence.Legacy &&

@@ -1,5 +1,13 @@
 [
   {
+    "version": "1.5.28",
+    "title": "Avvio e aggiornamenti",
+    "items": [
+      "Corretto un problema che poteva bloccare il pulsante Gioca dopo l’apertura di Wordle e impedire la comparsa dell’avviso di aggiornamento.",
+      "Partite, risultati e regole restano invariati."
+    ]
+  },
+  {
     "version": "1.5.27",
     "title": "Aggiornamento di verifica",
     "items": [

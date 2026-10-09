@@ -3518,6 +3518,13 @@ public sealed partial class MainViewModel : ObservableObject
 
     private async Task ShowUpdateDialogAsync(UpdateInfo update)
     {
+        var dispatcher = Application.Current?.Dispatcher;
+        if (dispatcher is not null && !dispatcher.CheckAccess())
+        {
+            await dispatcher.InvokeAsync(() => ShowUpdateDialogAsync(update)).Task.Unwrap();
+            return;
+        }
+
         _pendingUpdate = update;
         _updatePromptShownThisSession = true;
         CloseOverlays();
