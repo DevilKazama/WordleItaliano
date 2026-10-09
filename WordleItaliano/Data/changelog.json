@@ -1,5 +1,12 @@
 [
   {
+    "version": "1.5.27",
+    "title": "Aggiornamento di verifica",
+    "items": [
+      "Aggiornamento di prova per verificare l’avviso di nuove versioni. Partite, risultati e regole restano invariati."
+    ]
+  },
+  {
     "version": "1.5.26",
     "title": "Nuove sfide ufficiali",
     "items": [
